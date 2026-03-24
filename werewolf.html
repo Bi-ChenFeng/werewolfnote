@@ -1165,6 +1165,9 @@
       border-radius: 8px;
       margin-bottom: 6px;
       overflow-x: auto;
+      position: sticky;
+      top: var(--header-h, 44px);
+      z-index: 190;
     }
 
     .pbar-chip {
@@ -1240,7 +1243,11 @@
       main { padding: 6px; }
       .players-layout { grid-template-columns: 1fr; }
       .players-col { gap: 6px; }
-      header { padding: 6px 10px; }
+      header { padding: 6px 8px; gap: 6px; flex-wrap: wrap; }
+      .header-actions { gap: 5px; flex-wrap: wrap; }
+      .header-actions .btn-pdf { display: none; }
+      .btn { padding: 4px 8px; font-size: 11px; }
+      select.btn { max-width: 130px; }
     }
 
     /* ── Print / PDF ── */
@@ -2708,6 +2715,10 @@ function resetGame() {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+function updateHeaderHeight() {
+  const h = document.querySelector('header');
+  if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
+}
 load();
 renderBoardPanel();
 renderPlayers();
@@ -2716,6 +2727,8 @@ renderSheriffPanel();
 renderPlayerBar();
 renderSpeechSummary();
 updateApiKeyBtn();
+updateHeaderHeight();
+window.addEventListener('resize', updateHeaderHeight);
 </script>
 </body>
 </html>
