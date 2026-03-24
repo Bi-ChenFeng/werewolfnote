@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>狼人杀记录</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface2: #edf0f5;
+      --border: #dde1ea;
+      --border2: #c4cad6;
+      --text: #1c2030;
+      --text-muted: #5c6478;
+      --text-dim: #9aa3b2;
+      --accent: #4070f0;
+      --good: #1e9e50;
+      --good-light: #17843e;
+      --good-text: #ffffff;
+      --wolf: #d83020;
+      --wolf-light: #b82010;
+      --wolf-text: #ffffff;
+      --uncertain: #c88010;
+      --uncertain-light: #a86808;
+      --uncertain-text: #ffffff;
+      --watching: #6840c8;
+      --watching-light: #5230a8;
+      --watching-text: #ffffff;
+      --dead-opacity: 0.38;
+      --ming: #e6f7fc;
+      --ming-light: #1890b0;
+      --ming-text: #0c5068;
+      --yanmin: #e8fff2;
+      --yanmin-light: #1e9040;
+      --yanmin-text: #145028;
+      --jinshui: #fff8e0;
+      --jinshui-light: #c08800;
+      --jinshui-text: #604800;
+      --chasha: #fde8e8;
+      --chasha-light: #c82020;
+      --chasha-text: #701010;
+      --hantiao: #fff2e0;
+      --hantiao-light: #b05800;
+      --hantiao-text: #583000;
+      --prophet: #f0ebff;
+      --prophet-light: #6838c0;
+      --prophet-text: #38186a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      gap: 10px;
+    }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-title span { color: var(--text-muted); font-size: 12px; font-weight: 400; }
+
+    .header-actions { display: flex; gap: 8px; }
+
+    .btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--border); }
+    .btn-danger { border-color: var(--wolf-light); color: var(--wolf-light); }
+    .btn-danger:hover { background: var(--wolf); color: var(--wolf-text); }
+    .btn-pdf { border-color: #4060d0; color: #4060d0; }
+    .btn-pdf:hover { background: #4060d0; color: #fff; }
+    .btn-ai { border-color: #7040c0; color: #7040c0; }
+    .btn-ai:hover { background: #7040c0; color: #fff; }
+    .btn-ai.has-key { border-color: #20a060; color: #20a060; }
+    .btn-ai.has-key:hover { background: #20a060; color: #fff; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center; z-index: 999;
+    }
+    .modal-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px; width: 340px; max-width: 90vw;
+      display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .modal-title { font-size: 15px; font-weight: 800; color: var(--text); }
+    .modal-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+    .modal-desc a { color: #7040c0; }
+    .modal-input {
+      width: 100%; padding: 7px 10px; border-radius: 6px; font-size: 13px;
+      border: 1.5px solid var(--border2); background: var(--bg); color: var(--text);
+      font-family: monospace; box-sizing: border-box;
+    }
+    .modal-input:focus { outline: none; border-color: #7040c0; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* AI result block */
+    .ai-result {
+      background: #f5f0ff; border-left: 4px solid #7040c0;
+      border-radius: 0 6px 6px 0; padding: 6px 10px;
+      font-size: 12px; color: #2a0860; line-height: 1.6;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .ai-result-title {
+      font-size: 10px; font-weight: 800; color: #7040c0;
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;
+    }
+    .ai-loading { color: #9060d0; font-style: italic; font-size: 12px; padding: 4px 0; }
+    .btn-ai-summarize {
+      font-size: 10px; font-weight: 700; font-family: inherit;
+      padding: 1px 7px; border-radius: 4px; cursor: pointer;
+      border: 1px solid #9060d0; background: #f5f0ff; color: #7040c0;
+      transition: all 0.12s; white-space: nowrap;
+    }
+    .btn-ai-summarize:hover { background: #7040c0; color: #fff; }
+    .btn-ai-summarize:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Voice recording ── */
+    .speech-input-row { display: flex; gap: 5px; align-items: flex-start; margin-top: 5px; }
+    .speech-input-row textarea { flex: 1; margin-top: 0; }
+    .mic-btn {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      border: 1.5px solid var(--border2); background: var(--bg);
+      font-size: 14px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: all 0.15s; line-height: 1;
+      padding: 0;
+    }
+    .mic-btn:hover { border-color: #c03030; background: #fde8e8; }
+    .mic-btn.recording {
+      border-color: #c03030; background: #c03030; color: #fff;
+      animation: micPulse 1s ease-in-out infinite;
+    }
+    @keyframes micPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(192,48,48,0.4); }
+      50%      { box-shadow: 0 0 0 6px rgba(192,48,48,0); }
+    }
+
+    /* ── Main layout ── */
+    main {
+      padding: 8px 12px;
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 12px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      font-size: 11px;
+    }
+
+    .legend-title { color: var(--text-muted); margin-right: 4px; }
+
+    .legend-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .chip-good { background: var(--good); color: var(--good-text); }
+    .chip-wolf { background: var(--wolf); color: var(--wolf-text); }
+    .chip-uncertain { background: var(--uncertain); color: var(--uncertain-text); }
+    .chip-watching { background: var(--watching); color: var(--watching-text); }
+
+    .legend-hint { color: var(--text-dim); font-size: 11px; margin-left: 4px; }
+
+    /* ── Overview matrix ── */
+    .overview {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0;
+      margin-bottom: 6px;
+      overflow: hidden;
+    }
+
+    .overview summary {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 5px 12px;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .overview summary::before { content: '▶'; font-size: 7px; transition: transform 0.15s; }
+    .overview[open] summary::before { transform: rotate(90deg); }
+
+    .overview .matrix-wrap { padding: 0 10px 10px; }
+
+    /* ── Speech summary ── */
+    .speech-summary-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .speech-summary-section > summary {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 5px 12px;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .speech-summary-section > summary::before { content: '▶'; font-size: 7px; transition: transform 0.15s; }
+    .speech-summary-section[open] > summary::before { transform: rotate(90deg); }
+    .ss-copy-btn {
+      margin-left: auto; font-size: 10px; font-weight: 700; font-family: inherit;
+      padding: 1px 8px; border-radius: 4px; cursor: pointer;
+      border: 1px solid var(--border2); background: var(--bg); color: var(--text-muted);
+      transition: all 0.12s;
+    }
+    .ss-copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .speech-summary-body {
+      padding: 0 10px 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+    }
+    .ss-col { display: flex; flex-direction: column; gap: 8px; }
+    .ss-player {
+      display: flex; gap: 8px; align-items: flex-start;
+      padding: 6px 8px; border-radius: 6px;
+      background: var(--surface2); border: 1px solid var(--border);
+    }
+    .ss-left { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+    .ss-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--bg); border: 2px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 900; color: var(--text);
+      cursor: pointer; transition: transform 0.12s;
+    }
+    .ss-num:hover { transform: scale(1.1); }
+    .ss-role-chip {
+      font-size: 9px; font-weight: 700; padding: 1px 4px;
+      border-radius: 3px; background: #ede8ff; color: #38186a;
+      white-space: nowrap;
+    }
+    .ss-speeches { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+    .ss-line { display: flex; gap: 5px; align-items: baseline; min-width: 0; }
+    .ss-label {
+      font-size: 10px; font-weight: 800; flex-shrink: 0; min-width: 28px;
+      padding: 0px 3px; border-radius: 3px;
+    }
+    .ss-label.lbl-shang { background: #fff8d0; color: #7a5000; }
+    .ss-label.lbl-xia   { background: #ddeeff; color: #1a3a6a; }
+    .ss-label.lbl-day   { background: #f0f0f4; color: #505060; }
+    .ss-text {
+      font-size: 12px; color: var(--text); line-height: 1.5;
+      white-space: pre-wrap; word-break: break-all;
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .matrix-wrap { overflow-x: auto; }
+
+    .matrix-table {
+      border-collapse: collapse;
+      font-size: 12px;
+      min-width: 500px;
+    }
+
+    .matrix-table th, .matrix-table td {
+      padding: 3px 4px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .matrix-table thead th {
+      color: var(--text-muted);
+      font-size: 11px;
+      background: var(--surface2);
+    }
+
+    .matrix-table tbody td:first-child {
+      font-weight: 700;
+      font-size: 13px;
+      background: var(--surface2);
+    }
+
+    .m-cell {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 10px;
+    }
+
+    .m-good { background: var(--good-light); color: #fff; }
+    .m-wolf { background: var(--wolf-light); color: #fff; }
+    .m-uncertain { background: var(--uncertain-light); color: #fff; }
+    .m-watching { background: var(--watching-light); color: #fff; }
+
+    /* ── Players layout ── */
+    .players-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      align-items: start;
+    }
+
+    .players-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* ── Player card ── */
+    .player-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: opacity 0.2s, border-color 0.3s, box-shadow 0.3s;
+    }
+
+    /* 上警 — gold */
+    .player-card.shang {
+      border-color: #c48a00;
+      box-shadow: 0 0 12px rgba(196,138,0,0.25);
+    }
+    .player-card.shang .card-header {
+      background: linear-gradient(120deg, #fff5d0 0%, var(--surface2) 100%);
+    }
+    .player-card.shang .num-badge {
+      border-color: #c48a00;
+      color: #7a5000;
+    }
+
+    /* 警下 — cool slate */
+    .player-card.xia {
+      border-color: #3a5080;
+      box-shadow: 0 0 10px rgba(58,80,128,0.2);
+    }
+    .player-card.xia .card-header {
+      background: linear-gradient(120deg, #ddeeff 0%, var(--surface2) 100%);
+    }
+    .player-card.xia .num-badge {
+      border-color: #4a6aaa;
+      color: #1a3a6a;
+    }
+
+    .player-card.dead {
+      opacity: var(--dead-opacity);
+    }
+    .player-card.dead .card-header { background: #ebebef; }
+
+    .card-header {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Inline role/eval rows in header ── */
+    .card-inline-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .card-inline-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 3px;
+    }
+    .card-inline-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      min-width: 22px;
+    }
+    .inline-btn {
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1.5px solid var(--border2);
+      background: var(--bg);
+      color: var(--text-muted);
+      transition: all 0.12s;
+      line-height: 1.5;
+    }
+    .inline-btn:hover { border-color: var(--accent); color: var(--text); }
+    /* role active states reuse ev-btn active colors */
+    /* Role button: inactive text color by team */
+    .inline-btn.role-wolf, .inline-btn.role-wolfking,
+    .inline-btn.role-awaken_white, .inline-btn.role-awaken_king,
+    .inline-btn.role-crimsonmoon, .inline-btn.role-beauty,
+    .inline-btn.role-awaken_hidden, .inline-btn.role-awaken_beauty
+      { color:#c03030; }
+    .inline-btn.role-prophet, .inline-btn.role-mirror,
+    .inline-btn.role-lucky, .inline-btn.role-cupid, .inline-btn.role-multifacer
+      { color:#6040b0; }
+    .inline-btn.role-witch, .inline-btn.role-awaken_witch { color:#208050; }
+    .inline-btn.role-hunter, .inline-btn.role-awaken_hunter,
+    .inline-btn.role-demonhunter, .inline-btn.role-knight { color:#905000; }
+    .inline-btn.role-guard, .inline-btn.role-awaken_guard,
+    .inline-btn.role-gravekeeper, .inline-btn.role-gargoyle { color:#2060a0; }
+    .inline-btn.role-merchant { color:#2870b0; }
+    .inline-btn.role-dreamer, .inline-btn.role-raven, .inline-btn.role-cursefox,
+    .inline-btn.role-lonely, .inline-btn.role-awaken_lonely,
+    .inline-btn.role-maid, .inline-btn.role-duke, .inline-btn.role-fool { color:#5060a0; }
+
+    /* Role button: active state uses full role color */
+    .inline-btn.role-active { background:#ede8ff; border-color:#7050c0; color:#2a0860; }
+    .inline-btn.role-wolf.role-active, .inline-btn.role-wolfking.role-active,
+    .inline-btn.role-awaken_white.role-active, .inline-btn.role-awaken_king.role-active,
+    .inline-btn.role-crimsonmoon.role-active, .inline-btn.role-beauty.role-active,
+    .inline-btn.role-awaken_hidden.role-active, .inline-btn.role-awaken_beauty.role-active
+      { background:#fde8e8; border-color:#c03030; color:#7a0000; }
+    .inline-btn.role-prophet.role-active, .inline-btn.role-mirror.role-active,
+    .inline-btn.role-lucky.role-active, .inline-btn.role-cupid.role-active,
+    .inline-btn.role-multifacer.role-active
+      { background:#f0ebff; border-color:#6040b0; color:#38186a; }
+    .inline-btn.role-witch.role-active, .inline-btn.role-awaken_witch.role-active
+      { background:#e8fff2; border-color:#208050; color:#083820; }
+    .inline-btn.role-hunter.role-active, .inline-btn.role-awaken_hunter.role-active,
+    .inline-btn.role-demonhunter.role-active, .inline-btn.role-knight.role-active
+      { background:#fff5e0; border-color:#905000; color:#4a2800; }
+    .inline-btn.role-guard.role-active, .inline-btn.role-awaken_guard.role-active,
+    .inline-btn.role-gravekeeper.role-active, .inline-btn.role-gargoyle.role-active
+      { background:#e8f0ff; border-color:#2060a0; color:#001840; }
+    .inline-btn.role-merchant.role-active
+      { background:#e0f0ff; border-color:#2870b0; color:#003060; }
+    .inline-btn.role-dreamer.role-active, .inline-btn.role-raven.role-active,
+    .inline-btn.role-cursefox.role-active, .inline-btn.role-lonely.role-active,
+    .inline-btn.role-awaken_lonely.role-active, .inline-btn.role-maid.role-active,
+    .inline-btn.role-duke.role-active, .inline-btn.role-fool.role-active
+      { background:#eef0f8; border-color:#5060a0; color:#202850; }
+    .inline-btn.role-villager.role-active
+      { background:#f0f0f4; border-color:#606080; color:#2c2c40; }
+    /* eval active states */
+    .inline-btn.ev-wolf.active   { background:#fde8e8; border-color:#c03030; color:#7a0000; }
+    .inline-btn.ev-down.active   { background:#fff2e0; border-color:#d06020; color:#5a2800; }
+    .inline-btn.ev-eq.active     { background:#4a4a4a; border-color:#666666; color:#ffffff; font-weight:800; }
+    .inline-btn.ev-up.active     { background:#e8f0ff; border-color:#4070c0; color:#002060; }
+    .inline-btn.ev-bright.active { background:#e8f8e8; border-color:#40a040; color:#0a4020; }
+
+    .num-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2.5px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 900;
+      flex-shrink: 0;
+      color: var(--text);
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .player-card.dead .num-badge {
+      border-color: var(--wolf-light);
+      color: var(--text-muted);
+    }
+
+    /* ── Sheriff buttons ── */
+    .sheriff-btns {
+      display: flex;
+      gap: 4px;
+    }
+
+    .sheriff-btn {
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .shang-btn {
+      background: #fff8d0;
+      border-color: #c48a00;
+      color: #7a5000;
+      border-width: 1.5px;
+    }
+    .shang-btn:hover, .shang-btn.active {
+      background: #ffe870;
+      border-color: #a06800;
+      color: #5a3800;
+    }
+
+    .xia-btn {
+      background: #ddeeff;
+      border-color: #4a6aaa;
+      color: #1a3a6a;
+      border-width: 1.5px;
+    }
+    .xia-btn:hover, .xia-btn.active {
+      background: #aaccff;
+      border-color: #2a4a8a;
+      color: #0a1e50;
+    }
+
+    .btn-toggle-dead {
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1.5px solid;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-toggle-dead.alive-state {
+      background: #fde8e8;
+      border-color: var(--wolf-light);
+      color: #901010;
+    }
+    .btn-toggle-dead.alive-state:hover { background: var(--wolf); color: var(--wolf-text); }
+
+    .btn-toggle-dead.dead-state {
+      background: #e8fdf0;
+      border-color: var(--good-light);
+      color: #0e6030;
+    }
+    .btn-toggle-dead.dead-state:hover { background: var(--good); color: var(--good-text); }
+
+    /* ── Card body ── */
+    .card-body { padding: 4px 8px; display: flex; flex-direction: column; gap: 5px; }
+
+    /* Speech — collapsible via <details> */
+    .speech-details {
+      border: none;
+      background: #fffef0;
+      border-left: 4px solid #d4a800;
+      border-radius: 0 6px 6px 0;
+      padding: 3px 8px;
+    }
+    .speech-details summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      color: #6a5000;
+      letter-spacing: 0.2px;
+      padding: 2px 0;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      user-select: none;
+    }
+    .speech-details summary::before { content: '▶'; font-size: 8px; color: #d4a800; transition: transform 0.15s; }
+    .speech-details[open] summary::before { transform: rotate(90deg); }
+    .speech-details summary em { font-style: normal; font-size: 10px; color: #a08030; font-weight: 400; }
+
+    .speech-preview {
+      margin-left: 6px;
+      font-size: 11px;
+      font-weight: 400;
+      color: #6a5000;
+      font-style: italic;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 160px;
+      opacity: 0.75;
+    }
+    .speech-details[open] .speech-preview { display: none; }
+
+    .speech-details textarea {
+      width: 100%;
+      background: #ffffff;
+      border: 1.5px solid #c8a020;
+      border-radius: 5px;
+      color: #1c2030;
+      padding: 7px 10px;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 52px;
+      line-height: 1.6;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      margin-top: 5px;
+      display: block;
+    }
+    .speech-details textarea::placeholder { color: #c0a850; }
+    .speech-details textarea:focus { outline: none; border-color: #a07800; box-shadow: 0 0 0 2px rgba(180,140,0,0.15); }
+
+    /* Add/remove speech day buttons */
+    .add-speech-btn {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: 1px dashed var(--border2);
+      color: var(--text-dim);
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 2px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .add-speech-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .remove-speech-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .remove-speech-btn:hover { color: var(--wolf-light); }
+
+    /* Judgment */
+    .judgment-block {
+      background: #f0f5ff;
+      border-left: 4px solid #4070f0;
+      border-radius: 0 6px 6px 0;
+      padding: 4px 8px;
+    }
+
+    .player-btns { display: flex; flex-wrap: wrap; gap: 3px; }
+
+    .p-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      border: 1px solid var(--border2);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .p-btn:hover { border-color: var(--accent); transform: scale(1.08); }
+
+    .p-btn.good     { background: var(--good);     border-color: var(--good-light);     color: var(--good-text); }
+    .p-btn.wolf     { background: var(--wolf);     border-color: var(--wolf-light);     color: var(--wolf-text); }
+    .p-btn.uncertain{ background: var(--uncertain); border-color: var(--uncertain-light); color: var(--uncertain-text); }
+    .p-btn.watching { background: var(--watching); border-color: var(--watching-light);  color: var(--watching-text); }
+
+    /* Judgment summary tags under the buttons */
+    .judgment-summary { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; min-height: 0; }
+
+    .j-tag {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .j-tag.good     { background: var(--good);     color: var(--good-text); }
+    .j-tag.wolf     { background: var(--wolf);     color: var(--wolf-text); }
+    .j-tag.uncertain{ background: var(--uncertain); color: var(--uncertain-text); }
+    .j-tag.watching { background: var(--watching); color: var(--watching-text); }
+
+    /* ── Role section (multi-select panel) ── */
+    .role-section {
+      background: #f5f0ff;
+      border-left: 4px solid #6040b0;
+      border-radius: 0 6px 6px 0;
+      padding: 5px 10px;
+    }
+    .role-section > summary {
+      cursor: pointer; list-style: none;
+      display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+      padding: 2px 0; user-select: none;
+    }
+    .role-section > summary::before { content: '▶'; font-size: 8px; color: #6040b0; transition: transform 0.15s; flex-shrink: 0; }
+    .role-section[open] > summary::before { transform: rotate(90deg); }
+    .role-section-label { font-size: 12px; font-weight: 800; color: #38186a; flex-shrink: 0; }
+    .role-chip-wolfking.ev-chip { background:#fde8e8; color:#7a0000; }
+    .role-chip-wolf.ev-chip     { background:#fde8e8; color:#7a0000; }
+    .role-chip-prophet.ev-chip  { background:#f0ebff; color:#38186a; }
+    .role-chip-witch.ev-chip    { background:#e8fff2; color:#083820; }
+    .role-chip-merchant.ev-chip { background:#e0f0ff; color:#003060; }
+    .role-chip-lucky.ev-chip    { background:#f0ebff; color:#38186a; }
+    .role-chip-villager.ev-chip { background:#f0f0f4; color:#2c2c40; }
+
+    /* ── Eval section (multi-select panel) ── */
+    .eval-section {
+      background: #f0faf5;
+      border-left: 4px solid #20a060;
+      border-radius: 0 6px 6px 0;
+      padding: 5px 10px;
+    }
+    .eval-section > summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 2px 0;
+      user-select: none;
+    }
+    .eval-section > summary::before { content: '▶'; font-size: 8px; color: #20a060; transition: transform 0.15s; flex-shrink: 0; }
+    .eval-section[open] > summary::before { transform: rotate(90deg); }
+    .eval-section-label { font-size: 12px; font-weight: 800; color: #0a5030; flex-shrink: 0; }
+    .ev-placeholder { font-size: 11px; color: #60a880; font-weight: 400; font-style: italic; }
+    .ev-chip {
+      display: inline-flex; align-items: center;
+      padding: 1px 6px; border-radius: 4px;
+      background: #b8e0cc; color: #0a4028;
+      font-size: 10px; font-weight: 700;
+    }
+    .eval-panel { margin-top: 7px; display: flex; flex-direction: column; gap: 6px; }
+    .eval-fixed-row { display: flex; flex-wrap: wrap; gap: 4px; }
+    .ev-btn {
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; font-family: inherit;
+      cursor: pointer; border: 1.5px solid var(--border2);
+      background: var(--surface); color: var(--text-muted);
+      transition: all 0.12s;
+    }
+    .ev-btn:hover { border-color: #20a060; color: #0a5030; }
+    .ev-btn.ev-wolf.active      { background:#fde8e8; border-color:#c03030; color:#7a0000; }
+    .ev-btn.ev-maybe.active     { background:#fff0e0; border-color:#b06020; color:#5a2800; }
+    .ev-btn.ev-below-civ.active { background:#e8e8f0; border-color:#606080; color:#2c2c40; }
+    .ev-btn.ev-civ.active       { background:#e8f4ff; border-color:#4080c0; color:#002060; }
+    .ev-btn.ev-god.active       { background:#f0ebff; border-color:#6040b0; color:#38186a; }
+    .ev-btn.ev-up.active        { background:#e8fdf0; border-color:#1e9050; color:#083820; }
+    .ev-btn.ev-eq.active        { background:var(--surface2); border-color:var(--border2); color:var(--text); font-weight:800; }
+    .ev-btn.ev-down.active      { background:#fff5e0; border-color:#c06020; color:#5a2800; }
+    .ev-btn.ev-bright.active    { background:#fffbe0; border-color:#c8960a; color:#5a4000; }
+
+    /* ── Prophet toggle in header ── */
+    .prophet-btn {
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1.5px solid var(--prophet-light);
+      background: #f0ebff;
+      color: var(--prophet-text);
+      transition: all 0.12s;
+    }
+    .prophet-btn:hover { background: #ddd0ff; }
+    .prophet-btn.active { background: #c8b0ff; border-color: #5020a0; color: #2a0860; box-shadow: 0 0 6px rgba(112,64,200,0.35); }
+
+    /* ── Badge flow section ── */
+    .badge-flow-section {
+      border-top: 1px solid var(--border);
+      padding: 4px 8px;
+      background: #f5f0ff;
+      display: none;
+    }
+    .badge-flow-section.visible { display: block; }
+
+    .badge-flow-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--prophet-text);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-flow-hint { font-size: 10px; font-weight: 400; color: var(--text-dim); text-transform: none; letter-spacing: 0; }
+
+    .flow-picker { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+
+    .flow-pick-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      border: 1px solid var(--prophet-light);
+      background: var(--prophet);
+      color: var(--prophet-text);
+      font-size: 11px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: all 0.12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .flow-pick-btn:hover { opacity: 1; transform: scale(1.1); }
+    .flow-pick-btn.in-flow { opacity: 0.2; cursor: default; transform: none; }
+
+    .flow-display {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-height: 28px;
+    }
+
+    .flow-empty { font-size: 12px; color: var(--text-dim); }
+
+    .flow-chip {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .flow-num {
+      background: var(--prophet-light);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .flow-num:hover { background: #9030e0; }
+    .flow-num::after { content: attr(data-n); }
+    .flow-num:hover::after { content: '×'; }
+
+    .flow-arrow {
+      color: var(--prophet-text);
+      font-size: 14px;
+      margin: 0 2px;
+    }
+
+    .flow-clear-btn {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text-muted);
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .flow-clear-btn:hover { border-color: var(--wolf-light); color: var(--wolf-text); }
+    .badge-prophet  { background: var(--prophet);  color: var(--prophet-text); border: 1px solid var(--prophet-light); }
+
+    /* ── Prophet check section ── */
+    .prophet-check-section {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #c8b0f0;
+    }
+    .prophet-check-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--prophet-text);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .prophet-check-btns { display: flex; flex-wrap: wrap; gap: 4px; }
+    .pc-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 30px;
+      padding: 3px 2px;
+      border-radius: 5px;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.12s;
+    }
+    .pc-btn:hover { border-color: var(--prophet-light); }
+    .pc-btn .pc-num { font-size: 13px; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .pc-btn .pc-label { font-size: 9px; font-weight: 700; color: var(--text-dim); line-height: 1.2; }
+    .pc-btn.jinshui { background: var(--jinshui); border-color: var(--jinshui-light); }
+    .pc-btn.jinshui .pc-num  { color: var(--jinshui-text); }
+    .pc-btn.jinshui .pc-label { color: var(--jinshui-light); }
+    .pc-btn.chasha  { background: var(--chasha);  border-color: var(--chasha-light); }
+    .pc-btn.chasha  .pc-num  { color: var(--chasha-text); }
+    .pc-btn.chasha  .pc-label { color: var(--chasha-light); }
+
+    /* ── Board selector ── */
+    .board-select {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .board-select:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Board panel ── */
+    .board-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-bottom: 6px;
+      display: none;
+    }
+    .board-panel.visible { display: block; }
+
+    .board-panel-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .board-name { font-size: 13px; font-weight: 800; }
+    .board-note { font-size: 11px; color: var(--text-muted); }
+
+    .role-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .role-chip {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .role-chip .cnt {
+      opacity: 0.7;
+      font-weight: 400;
+      font-size: 11px;
+    }
+
+    /* ── Role strip per card ── */
+    .role-strip {
+      padding: 3px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .role-strip-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .role-select {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .role-select:focus { outline: none; }
+    .role-select option { background: #ffffff; color: #1c2030; }
+
+    .role-select.role-wolfking, .role-select.role-wolf,
+    .role-select.role-awaken_white, .role-select.role-awaken_king,
+    .role-select.role-crimsonmoon, .role-select.role-beauty,
+    .role-select.role-awaken_hidden, .role-select.role-awaken_beauty
+      { background:#fde8e8; border-color:#c03030; color:#7a0000; }
+    .role-select.role-prophet, .role-select.role-mirror,
+    .role-select.role-lucky, .role-select.role-cupid, .role-select.role-multifacer
+      { background:#f0ebff; border-color:#6040b0; color:#38186a; }
+    .role-select.role-witch, .role-select.role-awaken_witch
+      { background:#e8fff2; border-color:#208050; color:#083820; }
+    .role-select.role-hunter, .role-select.role-awaken_hunter,
+    .role-select.role-demonhunter, .role-select.role-knight
+      { background:#fff5e0; border-color:#905000; color:#4a2800; }
+    .role-select.role-guard, .role-select.role-awaken_guard,
+    .role-select.role-gravekeeper, .role-select.role-gargoyle
+      { background:#e8f0ff; border-color:#2060a0; color:#001840; }
+    .role-select.role-merchant  { background:#e0f0ff; border-color:#2870b0; color:#003060; }
+    .role-select.role-dreamer, .role-select.role-raven, .role-select.role-cursefox,
+    .role-select.role-lonely, .role-select.role-awaken_lonely,
+    .role-select.role-maid, .role-select.role-duke, .role-select.role-fool
+      { background:#eef0f8; border-color:#5060a0; color:#202850; }
+    .role-select.role-villager  { background:#f0f0f4; border-color:#606080; color:#2c2c40; }
+
+    /* Role color themes */
+    /* Wolf team — red */
+    .role-wolfking, .role-wolf, .role-awaken_white, .role-awaken_king,
+    .role-crimsonmoon, .role-beauty, .role-awaken_hidden, .role-awaken_beauty {
+      background:#fde8e8; border-color:#c03030; color:#7a0000;
+    }
+    /* God/ability team — purple */
+    .role-prophet, .role-mirror, .role-lucky, .role-cupid, .role-multifacer {
+      background:#f0ebff; border-color:#6040b0; color:#38186a;
+    }
+    /* Witch variants — green */
+    .role-witch, .role-awaken_witch {
+      background:#e8fff2; border-color:#208050; color:#083820;
+    }
+    /* Hunter variants — amber */
+    .role-hunter, .role-awaken_hunter, .role-demonhunter, .role-knight {
+      background:#fff5e0; border-color:#905000; color:#4a2800;
+    }
+    /* Guard variants — blue */
+    .role-guard, .role-awaken_guard, .role-gravekeeper, .role-gargoyle {
+      background:#e8f0ff; border-color:#2060a0; color:#001840;
+    }
+    /* Merchant / special — teal */
+    .role-merchant  { background:#e0f0ff; border-color:#2870b0; color:#003060; }
+    /* Special roles — gray-blue */
+    .role-dreamer, .role-raven, .role-cursefox, .role-lonely, .role-awaken_lonely,
+    .role-maid, .role-duke, .role-fool {
+      background:#eef0f8; border-color:#5060a0; color:#202850;
+    }
+    /* Villager — neutral */
+    .role-villager  { background:#f0f0f4; border-color:#606080; color:#2c2c40; }
+
+    /* Role badge in player name */
+    .role-badge {
+      display: inline-block;
+      padding: 0px 5px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      margin-left: 4px;
+      vertical-align: middle;
+      border: 1px solid transparent;
+    }
+
+    /* ── Sheriff quick panel ── */
+    .sheriff-quick-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-bottom: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .sqp-row { display: flex; align-items: center; gap: 8px; }
+    .sqp-label {
+      font-size: 11px; font-weight: 800;
+      width: 26px; flex-shrink: 0; text-align: center;
+    }
+    .sqp-shang { color: #8a6000; }
+    .sqp-xia   { color: #2a508a; }
+    .sqp-btns  { display: flex; gap: 3px; flex-wrap: wrap; }
+    .sqp-btn {
+      width: 28px; height: 28px;
+      border-radius: 5px;
+      border: 1.5px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 12px; font-weight: 800; font-family: inherit;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .sqp-btn:hover { border-color: var(--accent); transform: scale(1.08); }
+    .sqp-btn.active-shang { background:#fff8d0; border-color:#c48a00; color:#7a5000; }
+    .sqp-btn.active-xia   { background:#ddeeff; border-color:#4a6aaa; color:#1a3a6a; }
+    .sqp-btn.dead-dim     { opacity: 0.35; }
+
+    /* ── Player overview bar ── */
+    .player-bar {
+      display: flex;
+      gap: 4px;
+      padding: 5px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      overflow-x: auto;
+    }
+
+    .pbar-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      min-width: 40px;
+      flex-shrink: 0;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .pbar-chip:hover { border-color: var(--accent); }
+    .pbar-chip.dead  { opacity: 0.35; }
+    .pbar-chip.shang { border-color: #c48a00; }
+    .pbar-chip.xia   { border-color: #3a5080; }
+
+    .pbar-eval {
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+      max-width: 46px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.1;
+    }
+
+    .pbar-num {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--text);
+    }
+    .pbar-chip.shang .pbar-num { color: #8a6000; }
+    .pbar-chip.xia   .pbar-num { color: #2a508a; }
+
+    .pbar-role {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-dim);
+      white-space: nowrap;
+      max-width: 42px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pbar-role.role-wolfking { color:#a01010; }
+    .pbar-role.role-wolf     { color:#a01010; }
+    .pbar-role.role-prophet  { color:#5030a0; }
+    .pbar-role.role-witch    { color:#208050; }
+    .pbar-role.role-hunter   { color:#805000; }
+    .pbar-role.role-merchant { color:#1060a0; }
+    .pbar-role.role-lucky    { color:#5030a0; }
+    .pbar-role.role-guard    { color:#1050a0; }
+    .pbar-role.role-villager { color:#606080; }
+
+    @keyframes cardPulse {
+      0%,100% { box-shadow: 0 0 0 0 transparent; }
+      40%      { box-shadow: 0 0 0 3px var(--accent); }
+    }
+    .player-card.highlight { animation: cardPulse 0.7s ease; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      main { padding: 6px; }
+      .players-layout { grid-template-columns: 1fr; }
+      .players-col { gap: 6px; }
+      header { padding: 6px 10px; }
+    }
+
+    /* ── Print / PDF ── */
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body { background: #fff; }
+      header .header-actions { display: none; }
+      .sheriff-quick-panel { display: none; }
+      .player-bar-wrap { display: none; }
+      .overview { display: none; }
+      .speech-summary-section { display: none; }
+      .btn-pdf, .btn-danger, .btn-ai, .prophet-btn,
+      .add-speech-btn, .remove-speech-btn, .btn-ai-summarize, .mic-btn,
+      .flow-pick-btn, .flow-clear-btn,
+      .p-btn { display: none !important; }
+      .speech-input-row { display: block; }
+      details, details > * { display: block !important; }
+      details > summary { list-style: none; }
+      details > summary::before { display: none; }
+      .players-layout { grid-template-columns: 1fr 1fr; gap: 6px; }
+      .player-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #ccc; box-shadow: none; }
+      .card-body { gap: 4px; }
+      .speech-details textarea { min-height: unset; resize: none; border: none; padding: 0; margin: 0; font-size: 11px; }
+      .judgment-block { display: none; }
+      .badge-flow-section { display: none !important; }
+      .print-summary { display: block !important; }
+      main { padding: 6px; }
+    }
+    .print-summary { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    🐺 狼人杀记录 <span id="header-total">10人场</span>
+  </div>
+  <div class="header-actions">
+    <select class="board-select" id="boardSelect" onchange="selectBoard(this.value)">
+      <option value="">— 选择板子 —</option>
+      <optgroup label="10人场">
+        <option value="miracle">10人奇迹商人</option>
+        <option value="yuezui_10">10人月坠光渊</option>
+        <option value="speed_10">10人速推场</option>
+        <option value="beauty_10">10人狼美人骑士</option>
+        <option value="mirror_10">10人镜隐迷踪</option>
+        <option value="dark_10">10人暗夜星辰</option>
+      </optgroup>
+      <optgroup label="12人场">
+        <option value="miracle_12">12人奇迹商人</option>
+        <option value="standard_12">12人标准场</option>
+        <option value="yuezui_12">12人月坠光渊</option>
+        <option value="cupid_12">12人丘比特场</option>
+        <option value="beauty_12">12人狼美人骑士</option>
+        <option value="mirror_12">12人镜隐迷踪</option>
+        <option value="dark_12">12人暗夜星辰</option>
+        <option value="gargoyle_12">12人石像鬼守墓人</option>
+        <option value="crimson_12">12人赤月猎魔人</option>
+        <option value="cursefox_12">12人咒狐乌鸦</option>
+        <option value="lonely_12">12人孤独少女</option>
+        <option value="hunter_12">12人猎日逐光</option>
+        <option value="awaken_king_12">12人觉醒狼王</option>
+        <option value="awaken_lonely_12">12人觉醒孤独少女</option>
+        <option value="awaken_witch_12">12人觉醒女巫</option>
+        <option value="dream_king_12">12人狼王摄梦人</option>
+        <option value="king_guard_12">12人狼王守卫</option>
+      </optgroup>
+      <optgroup label="6人场">
+        <option value="basic_6">6人基础</option>
+      </optgroup>
+      <optgroup label="9人场">
+        <option value="basic_9">9人基础</option>
+      </optgroup>
+    </select>
+<button class="btn btn-pdf" onclick="printGame()">保存 PDF</button>
+<button class="btn btn-ai" id="aiKeyBtn" onclick="openApiKeyModal()">⚙ API Key</button>
+<button class="btn btn-danger" onclick="resetGame()">重置游戏</button>
+  </div>
+</header>
+
+<!-- API Key Modal -->
+<div id="apiKeyModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeApiKeyModal()">
+  <div class="modal-box">
+    <div class="modal-title">API Key 设置</div>
+    <div class="modal-desc">Key 仅存储在本地浏览器，不会上传到任何服务器。</div>
+    <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:2px">OpenAI Key <span style="font-weight:400">（录音转文字 + AI总结）</span></div>
+    <input class="modal-input" id="whisperKeyInput" type="password" placeholder="sk-..." spellcheck="false">
+    <div style="font-size:10px;color:var(--text-dim);margin-top:2px">在 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#7040c0">platform.openai.com</a> 获取</div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeApiKeyModal()">取消</button>
+      <button class="btn btn-ai" onclick="saveApiKey()">保存</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- Sheriff quick panel -->
+  <div class="sheriff-quick-panel">
+    <div class="sqp-row">
+      <span class="sqp-label sqp-xia">警下</span>
+      <div class="sqp-btns" id="sqpXia"></div>
+    </div>
+  </div>
+
+  <!-- Player overview bar -->
+  <div class="player-bar" id="playerBar"></div>
+
+  <!-- Overview -->
+  <details class="overview">
+    <summary>判断总览矩阵（行=判断者 · 列=被判断）</summary>
+    <div class="matrix-wrap">
+      <table class="matrix-table" id="overviewMatrix"></table>
+    </div>
+  </details>
+
+  <!-- Players -->
+  <div class="players-layout">
+    <div class="players-col" id="colLeft"></div>
+    <div class="players-col" id="colRight"></div>
+  </div>
+
+  <!-- Speech summary -->
+  <details class="speech-summary-section" id="speechSummarySection">
+    <summary>发言汇总<button class="ss-copy-btn" onclick="copySummary(event)">复制全部</button><button class="btn-ai-summarize" style="margin-left:4px" onclick="analyzeAll(event)">✨ 全场分析</button></summary>
+    <div id="speechSummaryBody"></div>
+    <div id="ai-all-result" style="padding:0 10px 10px"></div>
+  </details>
+
+</main>
+
+<script>
+// ── All roles (master list) ──────────────────────────────────────────────────
+const ALL_ROLES = [
+  { key: 'wolf',          name: '狼人'    },
+  { key: 'wolfking',      name: '狼王'    },
+  { key: 'awaken_white',  name: '觉白'    },
+  { key: 'awaken_king',   name: '觉王'    },
+  { key: 'crimsonmoon',   name: '赤月'    },
+  { key: 'beauty',        name: '狼美人'  },
+  { key: 'awaken_hidden', name: '觉隐'    },
+  { key: 'awaken_beauty', name: '觉美'    },
+  { key: 'prophet',       name: '预言家'  },
+  { key: 'witch',         name: '女巫'    },
+  { key: 'hunter',        name: '猎人'    },
+  { key: 'guard',         name: '守卫'    },
+  { key: 'merchant',      name: '奇迹商人'},
+  { key: 'mirror',        name: '魔镜'    },
+  { key: 'fool',          name: '白痴'    },
+  { key: 'knight',        name: '骑士'    },
+  { key: 'awaken_guard',  name: '觉守'    },
+  { key: 'awaken_hunter', name: '觉猎'    },
+  { key: 'awaken_witch',  name: '觉女'    },
+  { key: 'dreamer',       name: '摄梦人'  },
+  { key: 'gravekeeper',   name: '守墓人'  },
+  { key: 'gargoyle',      name: '石像鬼'  },
+  { key: 'demonhunter',   name: '猎魔人'  },
+  { key: 'raven',         name: '乌鸦'    },
+  { key: 'cursefox',      name: '咒狐'    },
+  { key: 'lonely',        name: '孤独少女'},
+  { key: 'awaken_lonely', name: '觉孤'    },
+  { key: 'cupid',         name: '丘比特'  },
+  { key: 'multifacer',    name: '千面人'  },
+  { key: 'maid',          name: '侍女'    },
+  { key: 'duke',          name: '伯爵'    },
+  { key: 'lucky',         name: '幸运儿'  },
+  { key: 'villager',      name: '平民'    },
+];
+
+// ── Boards ─────────────────────────────────────────────────────────────────
+const BOARDS = {
+  // ── 10人场 ──
+  miracle: {
+    name: '10人奇迹商人', playerCount: 10,
+    roles: ['wolfking','wolf','prophet','witch','merchant','lucky','villager'],
+  },
+  yuezui_10: {
+    name: '10人月坠光渊', playerCount: 10,
+    roles: ['wolf','awaken_white','prophet','witch','hunter','awaken_guard','villager'],
+  },
+  speed_10: {
+    name: '10人速推场', playerCount: 10,
+    roles: ['wolf','prophet','witch','hunter','villager'],
+  },
+  beauty_10: {
+    name: '10人狼美人骑士', playerCount: 10,
+    roles: ['wolf','beauty','prophet','witch','fool','knight','villager'],
+  },
+  mirror_10: {
+    name: '10人镜隐迷踪', playerCount: 10,
+    roles: ['wolf','awaken_hidden','mirror','witch','guard','villager'],
+  },
+  dark_10: {
+    name: '10人暗夜星辰', playerCount: 10,
+    roles: ['wolf','awaken_beauty','prophet','guard','witch','awaken_hunter','villager'],
+  },
+  // ── 12人场 ──
+  miracle_12: {
+    name: '12人奇迹商人', playerCount: 12,
+    roles: ['wolf','wolfking','prophet','guard','witch','merchant','lucky','villager'],
+  },
+  standard_12: {
+    name: '12人标准场', playerCount: 12,
+    roles: ['wolf','prophet','witch','hunter','fool','villager'],
+  },
+  yuezui_12: {
+    name: '12人月坠光渊', playerCount: 12,
+    roles: ['wolf','awaken_white','prophet','witch','hunter','awaken_guard','villager'],
+  },
+  cupid_12: {
+    name: '12人丘比特场', playerCount: 12,
+    roles: ['wolf','wolfking','prophet','witch','hunter','fool','cupid','multifacer','villager'],
+  },
+  beauty_12: {
+    name: '12人狼美人骑士', playerCount: 12,
+    roles: ['wolf','beauty','prophet','witch','guard','knight','villager'],
+  },
+  mirror_12: {
+    name: '12人镜隐迷踪', playerCount: 12,
+    roles: ['wolf','awaken_hidden','mirror','hunter','witch','guard','villager'],
+  },
+  dark_12: {
+    name: '12人暗夜星辰', playerCount: 12,
+    roles: ['wolf','awaken_beauty','prophet','guard','witch','awaken_hunter','villager'],
+  },
+  gargoyle_12: {
+    name: '12人石像鬼守墓人', playerCount: 12,
+    roles: ['wolf','gargoyle','prophet','witch','hunter','gravekeeper','villager'],
+  },
+  crimson_12: {
+    name: '12人赤月猎魔人', playerCount: 12,
+    roles: ['wolf','crimsonmoon','prophet','witch','fool','demonhunter','villager'],
+  },
+  cursefox_12: {
+    name: '12人咒狐乌鸦', playerCount: 12,
+    roles: ['wolf','wolfking','prophet','witch','hunter','raven','cursefox','villager'],
+  },
+  lonely_12: {
+    name: '12人孤独少女', playerCount: 12,
+    roles: ['wolf','prophet','witch','hunter','guard','lonely','villager'],
+  },
+  hunter_12: {
+    name: '12人猎日逐光', playerCount: 12,
+    roles: ['wolf','maid','prophet','witch','dreamer','duke','villager'],
+  },
+  awaken_king_12: {
+    name: '12人觉醒狼王', playerCount: 12,
+    roles: ['wolf','awaken_king','prophet','witch','merchant','dreamer','villager'],
+  },
+  awaken_lonely_12: {
+    name: '12人觉醒孤独少女', playerCount: 12,
+    roles: ['wolf','prophet','witch','dreamer','hunter','awaken_lonely','villager'],
+  },
+  awaken_witch_12: {
+    name: '12人觉醒女巫', playerCount: 12,
+    roles: ['wolf','awaken_king','prophet','guard','hunter','awaken_witch','villager'],
+  },
+  dream_king_12: {
+    name: '12人狼王摄梦人', playerCount: 12,
+    roles: ['wolf','wolfking','prophet','witch','hunter','dreamer','villager'],
+  },
+  king_guard_12: {
+    name: '12人狼王守卫', playerCount: 12,
+    roles: ['wolf','wolfking','prophet','witch','hunter','guard','villager'],
+  },
+  // ── 6人场 ──
+  basic_6: {
+    name: '6人基础', playerCount: 6,
+    roles: ['wolf','prophet','guard','villager'],
+  },
+  // ── 9人场 ──
+  basic_9: {
+    name: '9人基础', playerCount: 9,
+    roles: ['wolf','prophet','witch','hunter','villager'],
+  },
+};
+
+let currentBoard = null;  // key of selected board
+
+function selectBoard(key) {
+  currentBoard = key || null;
+  state.boardKey = currentBoard;
+  // auto-switch player count based on board
+  if (currentBoard && BOARDS[currentBoard]) {
+    const n = BOARDS[currentBoard].playerCount;
+    if (n && n !== totalPlayers) {
+      totalPlayers = n;
+      const tsel = $('totalSelect');
+      if (tsel) tsel.value = totalPlayers;
+      const el = $('header-total');
+      if (el) el.textContent = totalPlayers + '人场';
+      state = initState();
+      state.boardKey = currentBoard;
+      state.totalPlayers = totalPlayers;
+      localStorage.removeItem('ww_state_v1');
+      renderSheriffPanel();
+    }
+  }
+  renderPlayers();
+  renderMatrix();
+  renderPlayerBar();
+  save();
+}
+
+function selectTotal(n) {
+  if (n === totalPlayers) return;
+  totalPlayers = n;
+  const el = $('header-total');
+  if (el) el.textContent = n + '人场';
+  state = initState();
+  state.boardKey = currentBoard;
+  state.totalPlayers = totalPlayers;
+  localStorage.removeItem('ww_state_v1');
+  renderPlayers();
+  renderMatrix();
+  renderSheriffPanel();
+  renderPlayerBar();
+  renderSpeechSummary();
+  save();
+}
+
+function renderBoardPanel() { /* panel removed */ }
+
+function toggleRole(id, key) {
+  const p = state.players[id - 1];
+  if (!p.roles) p.roles = [];
+  const idx = p.roles.indexOf(key);
+  if (idx === -1) p.roles.push(key);
+  else p.roles.splice(idx, 1);
+  refreshRolesSection(id);
+  save();
+}
+
+function roleSectionHtml(p) {
+  if (!currentBoard) {
+    return `<div class="card-inline-row" id="role-row-${p.id}">
+      <span class="card-inline-label">身份</span>
+      <span style="font-size:10px;color:var(--text-dim);font-style:italic">请先选择板子</span>
+    </div>`;
+  }
+  const board = BOARDS[currentBoard];
+  const boardRoleKeys = board ? board.roles : [];
+  const boardRoles = boardRoleKeys.map(k => ALL_ROLES.find(r => r.key === k)).filter(Boolean);
+  const roles = p.roles || [];
+  const btns = boardRoles.map((r, i) =>
+    `<button class="inline-btn role-${r.key}${roles.includes(r.key) ? ' role-active' : ''}"
+      id="role-btn-${p.id}-${i}"
+      onclick="toggleRole(${p.id},'${r.key}')">${r.name}</button>`
+  ).join('');
+  return `<div class="card-inline-row" id="role-row-${p.id}">
+    <span class="card-inline-label">身份</span>${btns}
+  </div>`;
+}
+
+function refreshRolesSection(id) {
+  const roles = state.players[id - 1].roles || [];
+  const boardRoleKeys = currentBoard && BOARDS[currentBoard] ? BOARDS[currentBoard].roles : [];
+  const boardRoles = boardRoleKeys.map(k => ALL_ROLES.find(r => r.key === k)).filter(Boolean);
+  boardRoles.forEach((r, i) => {
+    const btn = $(`role-btn-${id}-${i}`);
+    if (btn) btn.classList.toggle('role-active', roles.includes(r.key));
+  });
+  renderPlayerBar();
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+let totalPlayers = 10;
+let state = initState();
+
+function initState() {
+  return {
+    players: Array.from({ length: totalPlayers }, (_, i) => ({
+      id: i + 1,
+      alive: true,
+      sheriffStatus: 'shang', // 'shang'|'xia'
+      claimedProphet: false, // 跳预言家
+      badgeFlow: [],         // 警徽流 [ playerId, ... ]
+      roles: [],             // multi-select role keys
+      evaluations: [],       // multi-select: ['狼','3上', ...]
+      sheriffSpeech: '',
+      speeches: [''],        // [day1警下, day2, day3, ...]
+      judgments: {},         // { targetId: 'good'|'wolf'|'uncertain'|'watching' }
+      prophetChecks: {}      // { targetId: 'jinshui'|'chasha' }
+    }))
+  };
+}
+
+// ── Sheriff status ─────────────────────────────────────────────────────────
+function setSheriff(id, status) {
+  const p = state.players[id - 1];
+  p.sheriffStatus = (p.sheriffStatus === status) ? 'shang' : status;
+  refreshCardClass(id);
+  const sb = $(`shang-btn-${id}`);
+  const xb = $(`xia-btn-${id}`);
+  if (sb) sb.classList.toggle('active', p.sheriffStatus === 'shang');
+  if (xb) xb.classList.toggle('active', p.sheriffStatus === 'xia');
+  renderSheriffPanel();
+  renderPlayerBar();
+  save();
+}
+
+function renderSheriffPanel() {
+  const xiaEl = $('sqpXia');
+  if (!xiaEl) return;
+  xiaEl.innerHTML = state.players.map(p => {
+    const active = p.sheriffStatus === 'xia';
+    const cls = `sqp-btn${active ? ' active-xia' : ''}${!p.alive ? ' dead-dim' : ''}`;
+    return `<button class="${cls}" onclick="setSheriff(${p.id},'xia')">${p.id}</button>`;
+  }).join('');
+}
+
+function refreshCardClass(id) {
+  const p = state.players[id - 1];
+  const card = $(`card-${id}`);
+  if (!card) return;
+  card.className = 'player-card'
+    + (p.sheriffStatus ? ` ${p.sheriffStatus}` : '')
+    + (p.alive ? '' : ' dead');
+}
+
+// ── Prophet claim ──────────────────────────────────────────────────────────
+function toggleProphet(id) {
+  const p = state.players[id - 1];
+  p.claimedProphet = !p.claimedProphet;
+  const btn = $(`prophet-btn-${id}`);
+  if (btn) btn.classList.toggle('active', p.claimedProphet);
+  const flowSec = $(`badge-flow-${id}`);
+  if (flowSec) flowSec.classList.toggle('visible', p.claimedProphet);
+  renderMatrix();
+  save();
+}
+
+function addToFlow(fromId, toId) {
+  const p = state.players[fromId - 1];
+  if (p.badgeFlow.includes(toId)) return;
+  p.badgeFlow.push(toId);
+  refreshBadgeFlow(fromId);
+  save();
+}
+
+function removeFromFlow(fromId, toId) {
+  const p = state.players[fromId - 1];
+  p.badgeFlow = p.badgeFlow.filter(x => x !== toId);
+  refreshBadgeFlow(fromId);
+  save();
+}
+
+function clearFlow(fromId) {
+  state.players[fromId - 1].badgeFlow = [];
+  refreshBadgeFlow(fromId);
+  save();
+}
+
+function refreshBadgeFlow(id) {
+  const p = state.players[id - 1];
+  const flow = p.badgeFlow;
+
+  // update picker buttons
+  for (let t = 1; t <= totalPlayers; t++) {
+    if (t === id) continue;
+    const btn = $(`flowpick-${id}-${t}`);
+    if (btn) btn.classList.toggle('in-flow', flow.includes(t));
+  }
+
+  // update display
+  const disp = $(`flow-display-${id}`);
+  if (!disp) return;
+  if (flow.length === 0) {
+    disp.innerHTML = '<span class="flow-empty">暂无流向，点击上方号码添加</span>';
+    return;
+  }
+  let html = '';
+  flow.forEach((tid, i) => {
+    html += `<div class="flow-chip">
+      <div class="flow-num" data-n="${tid}" onclick="removeFromFlow(${id},${tid})" title="点击移除"></div>
+    </div>`;
+    if (i < flow.length - 1) html += '<span class="flow-arrow">→</span>';
+  });
+  html += `<button class="flow-clear-btn" onclick="clearFlow(${id})">清空</button>`;
+  disp.innerHTML = html;
+}
+
+// ── Prophet checks ─────────────────────────────────────────────────────────
+const CHECK_CYCLE = [null, 'jinshui', 'chasha'];
+const CHECK_LABEL = { jinshui: '金水', chasha: '查杀' };
+
+function toggleProphetCheck(fromId, toId) {
+  const p = state.players[fromId - 1];
+  if (!p.prophetChecks) p.prophetChecks = {};
+  const cur = p.prophetChecks[toId] ?? null;
+  const nxt = CHECK_CYCLE[(CHECK_CYCLE.indexOf(cur) + 1) % CHECK_CYCLE.length];
+  if (nxt === null) delete p.prophetChecks[toId];
+  else p.prophetChecks[toId] = nxt;
+  refreshProphetChecks(fromId);
+  save();
+}
+
+function prophetChecksHtml(p) {
+  const checks = p.prophetChecks || {};
+  let html = '';
+  for (let t = 1; t <= totalPlayers; t++) {
+    if (t === p.id) continue;
+    const chk = checks[t] ?? null;
+    html += `<button class="pc-btn${chk ? ' ' + chk : ''}" onclick="toggleProphetCheck(${p.id},${t})">
+      <span class="pc-num">${t}</span>
+      <span class="pc-label">${chk ? CHECK_LABEL[chk] : '─'}</span>
+    </button>`;
+  }
+  return html;
+}
+
+function refreshProphetChecks(id) {
+  const c = $(`prophet-checks-${id}`);
+  if (c) c.innerHTML = prophetChecksHtml(state.players[id - 1]);
+}
+
+// ── Evaluation (multi-select) ───────────────────────────────────────────────
+// Wolf-probability colour for each eval option (higher score = more wolf)
+const EVAL_META = {
+  '明狼':  { bg:'#fde8e8', border:'#c03030', text:'#7a0000', score:4, label:'明狼'  },
+  'X偏下': { bg:'#fff2e0', border:'#d06020', text:'#5a2800', score:3, label:'X偏下' },
+  'X':     { bg:'#4a4a4a', border:'#666666', text:'#ffffff', score:2, label:'X'    },
+  'X偏上': { bg:'#e8f0ff', border:'#4070c0', text:'#002060', score:1, label:'X偏上' },
+  '明好人': { bg:'#e8f8e8', border:'#40a040', text:'#0a4020', score:0, label:'明好人' },
+};
+
+function getDominantEval(evaluations) {
+  if (!evaluations || !evaluations.length) return null;
+  let best = null, bestScore = -Infinity;
+  evaluations.forEach(ev => {
+    const m = EVAL_META[ev];
+    if (m && m.score > bestScore) { bestScore = m.score; best = m; }
+  });
+  return best;
+}
+
+const FIXED_EVALS = [
+  { key: '明狼',  cls: 'ev-wolf'   },
+  { key: 'X偏下', cls: 'ev-down'   },
+  { key: 'X',     cls: 'ev-eq'     },
+  { key: 'X偏上', cls: 'ev-up'     },
+  { key: '明好人', cls: 'ev-bright' },
+];
+
+const ALL_EVAL_KEYS = ['明狼', 'X偏下', 'X', 'X偏上', '明好人'];
+
+function toggleEval(id, val) {
+  const p = state.players[id - 1];
+  if (!p.evaluations) p.evaluations = [];
+  const already = p.evaluations.includes(val);
+  // All evals are mutually exclusive — only one at a time
+  p.evaluations = already ? [] : [val];
+  refreshEvalSection(id);
+  save();
+}
+
+function evalSectionHtml(p) {
+  const evals = p.evaluations || [];
+  const btns = FIXED_EVALS.map((e, i) =>
+    `<button class="inline-btn ${e.cls}${evals.includes(e.key) ? ' active' : ''}"
+      id="ev-fixed-${p.id}-${i}"
+      onclick="toggleEval(${p.id},'${e.key}')">${e.key}</button>`
+  ).join('');
+  return `<div class="card-inline-row" id="eval-row-${p.id}">
+    <span class="card-inline-label">评价</span>${btns}
+  </div>`;
+}
+
+function refreshEvalSection(id) {
+  const evals = state.players[id - 1].evaluations || [];
+  FIXED_EVALS.forEach((e, i) => {
+    const btn = $(`ev-fixed-${id}-${i}`);
+    if (btn) btn.classList.toggle('active', evals.includes(e.key));
+  });
+  renderMatrix();
+  renderPlayerBar();
+}
+
+// ── Judgment cycle ─────────────────────────────────────────────────────────
+const CYCLE = [null, 'good', 'wolf', 'uncertain', 'watching'];
+const LABELS = { good: '认好', wolf: '认狼', uncertain: '不确定', watching: '在意' };
+const SHORT  = { good: '好', wolf: '狼', uncertain: '?', watching: '!' };
+
+function nextJ(cur) {
+  const i = CYCLE.indexOf(cur ?? null);
+  return CYCLE[(i + 1) % CYCLE.length];
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+function toggleJudgment(fromId, toId) {
+  const p = state.players[fromId - 1];
+  const cur = p.judgments[toId] ?? null;
+  const nxt = nextJ(cur);
+  if (nxt === null) delete p.judgments[toId];
+  else p.judgments[toId] = nxt;
+  refreshJudgments(fromId);
+  renderMatrix();
+  save();
+}
+
+function toggleDead(id) {
+  const p = state.players[id - 1];
+  p.alive = !p.alive;
+  refreshCardClass(id);
+  const status = $(`status-${id}`);
+  const btn    = $(`deadbtn-${id}`);
+  status.textContent = p.alive ? '存活' : '已出局';
+  btn.className = 'btn-toggle-dead ' + (p.alive ? 'alive-state' : 'dead-state');
+  btn.textContent = p.alive ? '出局' : '复活';
+  renderMatrix();
+  save();
+}
+
+function updateSpeech(id, val) {
+  state.players[id - 1].sheriffSpeech = val;
+  updatePreview(`speeches-${id}`, 0, val, true);
+  renderSpeechSummary();
+  save();
+}
+
+function updateSpeechDay(id, idx, val) {
+  state.players[id - 1].speeches[idx] = val;
+  updatePreview(`speeches-${id}`, idx, val, false);
+  renderSpeechSummary();
+  save();
+}
+
+function updatePreview(containerId, idx, val, isSheriff) {
+  const container = $(containerId);
+  if (!container) return;
+  const details = container.querySelectorAll('.speech-details');
+  const target = details[isSheriff ? 0 : idx + 1];
+  if (!target) return;
+  const summary = target.querySelector('summary');
+  if (!summary) return;
+  let prev = summary.querySelector('.speech-preview');
+  const text = val && val.trim() ? val.trim().replace(/\s+/g, ' ') : '';
+  if (text) {
+    const snippet = text.length > 24 ? text.slice(0, 24) + '…' : text;
+    if (prev) { prev.textContent = snippet; }
+    else {
+      prev = document.createElement('span');
+      prev.className = 'speech-preview';
+      prev.textContent = snippet;
+      const removeBtn = summary.querySelector('.remove-speech-btn');
+      removeBtn ? summary.insertBefore(prev, removeBtn) : summary.appendChild(prev);
+    }
+  } else if (prev) {
+    prev.remove();
+  }
+}
+
+function addSpeech(id) {
+  state.players[id - 1].speeches.push('');
+  refreshSpeeches(id);
+  save();
+}
+
+function removeSpeech(id, idx) {
+  state.players[id - 1].speeches.splice(idx, 1);
+  refreshSpeeches(id);
+  save();
+}
+
+function preview(text) {
+  if (!text || !text.trim()) return '';
+  const t = text.trim().replace(/\s+/g, ' ');
+  return `<span class="speech-preview">${esc(t.length > 24 ? t.slice(0, 24) + '…' : t)}</span>`;
+}
+
+function micBtn(id, slot) {
+  return `<button class="mic-btn" id="mic-${id}-${slot}" onclick="toggleRecord(${id},'${slot}')" title="录音">🎤</button>`;
+}
+
+function speechesHtml(p) {
+  const sheriff = `
+    <details class="speech-details"${p.sheriffSpeech ? ' open' : ''}>
+      <summary>警上${preview(p.sheriffSpeech)}</summary>
+      <div class="speech-input-row">
+        <textarea id="ta-${p.id}-sheriff" placeholder="警上发言…"
+          oninput="updateSpeech(${p.id},this.value)">${esc(p.sheriffSpeech)}</textarea>
+        ${micBtn(p.id,'sheriff')}
+      </div>
+    </details>`;
+  const days = p.speeches.map((s, i) => {
+    const label = i === 0 ? '警下' : `Day${i + 1}`;
+    const removeBtn = i > 0
+      ? `<button class="remove-speech-btn" onclick="removeSpeech(${p.id},${i});event.stopPropagation()" title="删除">×</button>`
+      : '';
+    return `
+    <details class="speech-details"${s ? ' open' : ''}>
+      <summary>${label}${preview(s)}${removeBtn}</summary>
+      <div class="speech-input-row">
+        <textarea id="ta-${p.id}-day${i}" placeholder="${label}发言…"
+          oninput="updateSpeechDay(${p.id},${i},this.value)">${esc(s)}</textarea>
+        ${micBtn(p.id,`day${i}`)}
+      </div>
+    </details>`;
+  }).join('');
+  const addBtn = `<button class="add-speech-btn" onclick="addSpeech(${p.id})">＋ 添加天数</button>`;
+  const aiBtn = `<button class="btn-ai-summarize" id="ai-btn-${p.id}" onclick="summarizePlayer(${p.id})">✨ AI总结</button>`;
+  const aiResult = `<div id="ai-result-${p.id}"></div>`;
+  return sheriff + days + addBtn + aiBtn + aiResult;
+}
+
+function refreshSpeeches(id) {
+  const c = $(`speeches-${id}`);
+  if (c) c.innerHTML = speechesHtml(state.players[id - 1]);
+}
+
+// ── Render helpers ─────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function refreshJudgments(fromId) {
+  const p = state.players[fromId - 1];
+  for (let t = 1; t <= totalPlayers; t++) {
+    if (t === fromId) continue;
+    const btn = $(`btn-${fromId}-${t}`);
+    if (!btn) continue;
+    const j = p.judgments[t] ?? null;
+    btn.className = 'p-btn' + (j ? ` ${j}` : '');
+    btn.title     = j ? LABELS[j] : '点击判断';
+  }
+}
+
+// ── Matrix ─────────────────────────────────────────────────────────────────
+function renderMatrix() {
+  const ids = Array.from({ length: totalPlayers }, (_, i) => i + 1);
+  const colColors = id => state.players[id-1].alive ? 'var(--text)' : 'var(--text-dim)';
+  const rowColors = id => state.players[id-1].alive ? 'var(--text)' : 'var(--text-dim)';
+
+  let h = '<thead><tr><th style="background:var(--surface2);color:var(--text-muted)">↓\\→</th>';
+  ids.forEach(id => {
+    const p = state.players[id - 1];
+    const evHtml = (p.evaluations && p.evaluations.length)
+      ? '<br>' + p.evaluations.map(v => {
+          const c = v.endsWith('上') ? 'var(--good-light)' : v.endsWith('下') ? 'var(--wolf-light)' : 'var(--text-muted)';
+          return `<span style="font-size:9px;font-weight:700;color:${c}">${v}</span>`;
+        }).join(' ')
+      : '';
+    const prHtml = p.claimedProphet ? `<br><span class="eval-badge badge-prophet" style="font-size:9px">跳预</span>` : '';
+    h += `<th style="color:${colColors(id)}">${id}${evHtml}${prHtml}</th>`;
+  });
+  h += '</tr></thead><tbody>';
+
+  ids.forEach(fid => {
+    const p = state.players[fid - 1];
+    h += `<tr><td style="color:${rowColors(fid)}">${fid}</td>`;
+    ids.forEach(tid => {
+      if (fid === tid) {
+        h += '<td style="background:var(--surface2);color:var(--text-dim)">·</td>';
+      } else {
+        const j = p.judgments[tid];
+        if (j) {
+          h += `<td><div class="m-cell m-${j}">${SHORT[j]}</div></td>`;
+        } else {
+          h += '<td></td>';
+        }
+      }
+    });
+    h += '</tr>';
+  });
+
+  h += '</tbody>';
+  $('overviewMatrix').innerHTML = h;
+}
+
+// ── Player cards ───────────────────────────────────────────────────────────
+function renderPlayers() {
+  $('colLeft').innerHTML = '';
+  $('colRight').innerHTML = '';
+
+  state.players.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'player-card'
+      + (p.sheriffStatus ? ` ${p.sheriffStatus}` : '')
+      + (p.alive ? '' : ' dead');
+    card.id = `card-${p.id}`;
+
+    // Build judgment buttons
+    let btnHtml = '';
+    for (let t = 1; t <= totalPlayers; t++) {
+      if (t === p.id) continue;
+      const j = p.judgments[t] ?? null;
+      btnHtml += `<button
+        class="p-btn${j ? ' ' + j : ''}"
+        id="btn-${p.id}-${t}"
+        onclick="toggleJudgment(${p.id},${t})"
+        title="${j ? LABELS[j] : '点击判断'}"
+      >${t}</button>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="num-badge">${p.id}</div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:3px;align-items:center;flex-shrink:0">
+          <button class="prophet-btn${p.claimedProphet ? ' active' : ''}"
+            id="prophet-btn-${p.id}" onclick="toggleProphet(${p.id})">跳预</button>
+        </div>
+      </div>
+      <div class="badge-flow-section${p.claimedProphet ? ' visible' : ''}" id="badge-flow-${p.id}">
+        <div class="badge-flow-title">警徽流</div>
+        <div class="flow-picker">
+          ${Array.from({length: totalPlayers}, (_, i) => i + 1)
+            .filter(t => t !== p.id)
+            .map(t => `<button
+              class="flow-pick-btn${p.badgeFlow.includes(t) ? ' in-flow' : ''}"
+              id="flowpick-${p.id}-${t}"
+              onclick="addToFlow(${p.id},${t})"
+            >${t}</button>`).join('')}
+        </div>
+        <div class="flow-display" id="flow-display-${p.id}">
+          ${p.badgeFlow.length === 0
+            ? ''
+            : p.badgeFlow.map((tid, i) =>
+                `<div class="flow-chip"><div class="flow-num" data-n="${tid}" onclick="removeFromFlow(${p.id},${tid})" title="点击移除"></div></div>`
+                + (i < p.badgeFlow.length - 1 ? '<span class="flow-arrow">→</span>' : '')
+              ).join('') + `<button class="flow-clear-btn" onclick="clearFlow(${p.id})">清空</button>`
+          }
+        </div>
+        <div class="prophet-check-section">
+          <div class="prophet-check-title">查验记录</div>
+          <div class="prophet-check-btns" id="prophet-checks-${p.id}">
+            ${prophetChecksHtml(p)}
+          </div>
+        </div>
+      </div>
+      <div class="card-inline-rows">
+        ${roleSectionHtml(p)}
+        ${evalSectionHtml(p)}
+      </div>
+      <div class="card-body">
+        <div id="speeches-${p.id}">${speechesHtml(p)}</div>
+        <div class="judgment-block">
+          <div class="player-btns">${btnHtml}</div>
+        </div>
+      </div>
+    `;
+
+    (p.id <= 6 ? $('colLeft') : $('colRight')).appendChild(card);
+  });
+}
+
+// ── Player overview bar ────────────────────────────────────────────────────
+function renderSpeechSummary() {
+  const body = $('speechSummaryBody');
+  const section = $('speechSummarySection');
+  if (!body) return;
+
+  const makeCol = (players) => players.map(p => {
+    const lines = [];
+    if (p.sheriffSpeech && p.sheriffSpeech.trim())
+      lines.push(`<div class="ss-line"><span class="ss-label lbl-shang">警上</span><span class="ss-text">${esc(p.sheriffSpeech.trim())}</span></div>`);
+    (p.speeches || []).forEach((s, i) => {
+      if (s && s.trim()) {
+        const lbl = i === 0 ? '警下' : `Day${i+1}`;
+        const cls = i === 0 ? 'lbl-xia' : 'lbl-day';
+        lines.push(`<div class="ss-line"><span class="ss-label ${cls}">${lbl}</span><span class="ss-text">${esc(s.trim())}</span></div>`);
+      }
+    });
+    const ev = getDominantEval(p.evaluations);
+    const numStyle = ev ? `background:${ev.bg};border-color:${ev.border};color:${ev.text};` : '';
+    const roles = (p.roles || []).map(k => ALL_ROLES.find(r => r.key === k)).filter(Boolean);
+    const roleChips = roles.map(r => `<span class="ss-role-chip">${r.name}</span>`).join('');
+
+    // Judgments about others
+    const JUDGMENT_STYLE = {
+      wolf:      'background:#fde8e8;border:1px solid #c03030;color:#7a0000',
+      good:      'background:#e8f4ff;border:1px solid #4080c0;color:#002060',
+      uncertain: 'background:#fff8e0;border:1px solid #b08020;color:#504000',
+      watching:  'background:#f0f0f0;border:1px solid #999;color:#444',
+    };
+    const JUDGMENT_LABEL = { wolf:'狼', good:'好人', uncertain:'存疑', watching:'观望' };
+    const judgmentChips = Object.entries(p.judgments || {}).map(([tid, val]) => {
+      const st = JUDGMENT_STYLE[val] || '';
+      const lb = JUDGMENT_LABEL[val] || val;
+      return `<span style="display:inline-block;padding:1px 5px;border-radius:8px;font-size:10px;margin:1px;${st}">${tid}号 ${lb}</span>`;
+    }).join('');
+    const judgmentsRow = judgmentChips ? `<div class="ss-line" style="flex-wrap:wrap;gap:2px"><span class="ss-label" style="background:#e0e0e0;color:#444">判断</span><span class="ss-text" style="display:flex;flex-wrap:wrap;gap:2px">${judgmentChips}</span></div>` : '';
+
+    return `<div class="ss-player">
+      <div class="ss-left">
+        <div class="ss-num" style="${numStyle}" onclick="focusPlayer(${p.id})" title="跳转到玩家${p.id}">${p.id}</div>
+        ${roleChips}
+      </div>
+      <div class="ss-speeches">${lines.length || judgmentChips ? lines.join('') + judgmentsRow : '<span style="color:var(--text-dim);font-size:11px">暂无记录</span>'}</div>
+    </div>`;
+  }).join('');
+
+  const left  = makeCol(state.players.slice(0, 6));
+  const right = makeCol(state.players.slice(6));
+
+  body.className = 'speech-summary-body';
+  body.innerHTML = `<div class="ss-col">${left}</div><div class="ss-col">${right}</div>`;
+  if (section && !section.open) section.open = true;
+}
+
+// ── Voice recording (MediaRecorder + Whisper) ───────────────────────────────
+let _micStream = null;
+let _mediaRecorder = null;
+let _recChunks = [];
+let _recTarget = null;
+
+async function initMicStream() {
+  if (_micStream) return true;
+  try {
+    _micStream = await navigator.mediaDevices.getUserMedia({ audio: {
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: true,
+    }});
+    return true;
+  } catch(e) { alert('请允许麦克风访问后重试'); return false; }
+}
+
+async function toggleRecord(id, slot) {
+  // Stop if already recording
+  if (_mediaRecorder && _mediaRecorder.state === 'recording') {
+    _mediaRecorder.stop();
+    return;
+  }
+
+  if (!_whisperKey) { openApiKeyModal(); return; }
+
+  const ok = await initMicStream();
+  if (!ok) return;
+
+  const ta = $(`ta-${id}-${slot}`);
+  if (!ta) return;
+  const details = ta.closest('details');
+  if (details) details.open = true;
+
+  _recTarget = { id, slot };
+  _recChunks = [];
+
+  const preferredTypes = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus','audio/ogg'];
+  const mimeType = preferredTypes.find(t => MediaRecorder.isTypeSupported(t)) || '';
+  _mediaRecorder = mimeType ? new MediaRecorder(_micStream, { mimeType }) : new MediaRecorder(_micStream);
+
+  _mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) _recChunks.push(e.data); };
+
+  _mediaRecorder.onstop = () => {
+    setMicBtn(id, slot, false);
+    const btn = $(`mic-${id}-${slot}`);
+
+    const actualType = _mediaRecorder.mimeType || mimeType || 'audio/webm';
+    const ext = actualType.includes('ogg') ? 'ogg' : actualType.includes('mp4') ? 'mp4' : 'webm';
+    const blob = new Blob(_recChunks, { type: actualType });
+
+    // 立刻解锁按钮，后台处理不阻塞下一个人录音
+    if (btn) { btn.textContent = '🎤'; btn.disabled = false; }
+    _recTarget = null;
+
+    // 显示转录中占位
+    const prev = ta.value ? ta.value + (ta.value.endsWith('，') || ta.value.endsWith('。') ? '' : '，') : '';
+    ta.value = prev + '【转录中…】';
+    syncSpeechFromTa(id, slot, ta.value);
+    save();
+
+    // 后台异步：Whisper → GPT，完全不阻塞界面
+    (async () => {
+      try {
+        const form = new FormData();
+        form.append('file', blob, `audio.${ext}`);
+        form.append('model', 'whisper-1');
+        form.append('language', 'zh');
+        form.append('response_format', 'verbose_json');
+        form.append('prompt', '这是狼人杀游戏发言，常含缩写。奇商=奇迹商人，预=预言家，巫=女巫，猎=猎人，守=守卫，镜=魔镜，王=狼王，民=平民，神=神职，警=警长，金水=预言家验好人，查杀=预言家验狼人，跳预=声称预言家，上警=竞选警长，刀=击杀，毒=毒药，救=解药，推=投票出局，冲=集中投票，带走=击杀出局。角色全称：狼人、狼王、白狼王、狼美人、隐狼、觉白、觉王、赤月、觉隐、觉美、预言家、女巫、猎人、守卫、奇迹商人、幸运儿、魔镜、愚民、骑士、觉守、觉猎、觉女、摄梦人、守墓人、石像鬼、猎魔人、乌鸦、咒狐、孤独少女、觉孤、丘比特、千面人、侍女、伯爵、平民、村民。术语：金水、银水、查杀、警徽流、首刀、自刀、空刀、平安夜、悍跳、对跳、铁好人、铁狼、深水狼、倒钩、归票、自爆、屠边、屠城、民及民以上、民及民以下。');
+
+        const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${_whisperKey}` },
+          body: form,
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error?.message || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        const segments = data.segments || [];
+        const validText = segments
+          .filter(s => (s.no_speech_prob ?? 0) < 0.6)
+          .map(s => s.text.trim())
+          .join('');
+        const HALLUCINATION_KEYWORDS = ['明镜与点点', '点赞订阅', '打赏支持', '不吝点赞'];
+        let text = validText.trim();
+        if (HALLUCINATION_KEYWORDS.some(k => text.includes(k))) text = '';
+
+        if (text) {
+          // 更新占位为"AI整理中"
+          const cur = ta.value.replace('【转录中…】', '【AI整理中…】');
+          ta.value = cur;
+          syncSpeechFromTa(id, slot, cur);
+          save();
+          autoAnalyzeSpeech(id, slot, prev, text);
+        } else {
+          // 无有效内容，移除占位
+          const cur = ta.value.replace((prev ? '，' : '') + '【转录中…】', '').replace('【转录中…】', '');
+          ta.value = cur;
+          syncSpeechFromTa(id, slot, cur);
+          save();
+        }
+      } catch(e) {
+        const cur = ta.value.replace('【转录中…】', '【转录失败】');
+        ta.value = cur;
+        syncSpeechFromTa(id, slot, cur);
+        save();
+      }
+    })();
+  };
+
+  _mediaRecorder.start();
+  setMicBtn(id, slot, true);
+}
+
+function syncSpeechFromTa(id, slot, val) {
+  const p = state.players[id - 1];
+  if (slot === 'sheriff') {
+    p.sheriffSpeech = val;
+  } else {
+    const idx = parseInt(slot.replace('day', ''));
+    if (p.speeches[idx] !== undefined) p.speeches[idx] = val;
+  }
+}
+
+function updatePreviewFromState(id, slot) {
+  const p = state.players[id - 1];
+  const val = slot === 'sheriff' ? p.sheriffSpeech : p.speeches[parseInt(slot.replace('day',''))];
+  const ta = $(`ta-${id}-${slot}`);
+  if (!ta) return;
+  const summary = ta.closest('details')?.querySelector('summary');
+  if (!summary) return;
+  let prev = summary.querySelector('.speech-preview');
+  const text = val && val.trim() ? val.trim().replace(/\s+/g,' ') : '';
+  if (text) {
+    const snippet = text.length > 24 ? text.slice(0,24)+'…' : text;
+    if (prev) prev.textContent = snippet;
+    else {
+      prev = document.createElement('span');
+      prev.className = 'speech-preview';
+      prev.textContent = snippet;
+      summary.appendChild(prev);
+    }
+  } else if (prev) prev.remove();
+}
+
+function setMicBtn(id, slot, on) {
+  const btn = $(`mic-${id}-${slot}`);
+  if (!btn) return;
+  btn.classList.toggle('recording', on);
+  btn.title = on ? '点击停止录音' : '录音';
+}
+
+// ── AI helpers ─────────────────────────────────────────────────────────────
+let _whisperKey = localStorage.getItem('ww_whisper_key') || '';
+
+function openApiKeyModal() {
+  $('whisperKeyInput').value = _whisperKey;
+  $('apiKeyModal').style.display = 'flex';
+  setTimeout(() => $('apiKeyInput').focus(), 50);
+}
+function closeApiKeyModal() { $('apiKeyModal').style.display = 'none'; }
+function saveApiKey() {
+  _whisperKey = $('whisperKeyInput').value.trim();
+  localStorage.setItem('ww_whisper_key', _whisperKey);
+  updateApiKeyBtn();
+  closeApiKeyModal();
+}
+function updateApiKeyBtn() {
+  const btn = $('aiKeyBtn');
+  if (!btn) return;
+  const hasAny = _whisperKey;
+  if (hasAny) { btn.textContent = '✓ API Key'; btn.classList.add('has-key'); }
+  else { btn.textContent = '⚙ API Key'; btn.classList.remove('has-key'); }
+}
+
+async function callGPT(prompt) {
+  if (!_whisperKey) { openApiKeyModal(); throw new Error('no key'); }
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${_whisperKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 512,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+async function autoAnalyzeSpeech(id, slot, prev, rawText) {
+  if (!_whisperKey) return;
+  const p = state.players[id - 1];
+  const roles = (p.roles || []).map(k => ALL_ROLES.find(r => r.key === k)).filter(Boolean).map(r => r.name).join('、') || '未知';
+  const isProphet = p.claimedProphet;
+
+  const prompt = `你是狼人杀游戏助手。分析以下玩家发言，提取结构化信息。
+
+常用缩写对照：预/先知=预言家、巫=女巫、猎=猎人、守=守卫、奇商/商人=奇迹商人、镜=魔镜、狼王/王=狼王、觉白/白=觉白、觉王=觉王、赤月=赤月、民=平民、神=神职角色、警=警长、金/金水=预言家验好人、查杀/杀=预言家验狼人、跳=声称某身份、刀=夜晚击杀、毒=女巫用毒药、救/奶=女巫用解药、推/冲=投票出局、带=带走击杀、上警=参与警长竞选、撕=撕警徽、流=警徽流。
+
+玩家：${id}号，身份标记：${roles}，${isProphet ? '已跳预言家' : '未跳预'}
+场上玩家编号：1到${totalPlayers}号
+发言内容：${rawText}
+
+请返回JSON（只返回JSON，不要其他文字）：
+{
+  "claimedRole": "role_key或null（发言中声称的身份，用英文key：prophet/witch/hunter/guard/merchant/wolfking/wolf/villager等，无则null）",
+  "suggestedEval": "评价或null（根据发言内容和逻辑建议的评价，只能从以下选一个：明狼/X偏下/X/X偏上/明好人，无把握则null）",
+  "prophetChecks": { "玩家号": "jinshui|chasha" },
+  "badgeFlow": [警徽流玩家号顺序数组],
+  "judgments": { "玩家号": "good|wolf|uncertain|watching" },
+  "summary": "两到三句话概括发言要点，包括跳了什么身份、对谁的判断和理由"
+}
+
+说明：
+- claimedRole：只填主动声称的身份（"我是预言家"→prophet，"我是女巫"→witch，"我是猎人"→hunter等），没有声称则null
+- suggestedEval：根据发言逻辑和表现推断此人的评价，明显是狼=明狼，逻辑有问题=X偏下，普通=X，逻辑清晰偏好人=X偏上，明显是好人=明好人，无法判断=null
+- prophetChecks：提到验人结果，jinshui=金水，chasha=查杀
+- badgeFlow：提到警徽传递顺序（如"警徽给X号"、"流给X号"）
+- judgments：对其他玩家身份的明确判断，good=好人，wolf=狼，uncertain=存疑，watching=观望
+- 如无相关信息则对应字段返回空对象/空数组/null`;
+
+  try {
+    const raw = await callGPT(prompt);
+    // extract JSON from response
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return;
+    const data = JSON.parse(match[0]);
+
+    // Apply judgments
+    if (data.judgments && typeof data.judgments === 'object') {
+      if (!p.judgments) p.judgments = {};
+      Object.entries(data.judgments).forEach(([tid, val]) => {
+        const t = parseInt(tid);
+        if (t >= 1 && t <= totalPlayers && t !== id && ['good','wolf','uncertain','watching'].includes(val)) {
+          p.judgments[t] = val;
+        }
+      });
+      refreshJudgments(id);
+    }
+
+    // Auto-set claimed role
+    if (data.claimedRole) {
+      const roleKey = data.claimedRole;
+      const validRole = ALL_ROLES.find(r => r.key === roleKey);
+      if (validRole && (!p.roles || !p.roles.includes(roleKey))) {
+        p.roles = [...(p.roles || []).filter(r => r !== roleKey), roleKey];
+        refreshRolesSection(id);
+      }
+      // Special handling for prophet
+      if (roleKey === 'prophet' && !p.claimedProphet) {
+        p.claimedProphet = true;
+        const btn = $(`prophet-btn-${id}`);
+        if (btn) btn.classList.add('active');
+        const flowSec = $(`badge-flow-${id}`);
+        if (flowSec) flowSec.classList.add('visible');
+        renderMatrix();
+      }
+    }
+
+    // Auto-set suggested evaluation
+    if (data.suggestedEval && EVAL_META[data.suggestedEval]) {
+      if (!p.evaluations || !p.evaluations.includes(data.suggestedEval)) {
+        p.evaluations = [data.suggestedEval];
+        refreshEvalSection(id);
+        renderPlayerBar();
+      }
+    }
+
+    // Apply prophet checks
+    const hasChecks = data.prophetChecks && Object.keys(data.prophetChecks).length > 0;
+    if (hasChecks) {
+      if (!p.prophetChecks) p.prophetChecks = {};
+      Object.entries(data.prophetChecks).forEach(([tid, val]) => {
+        const t = parseInt(tid);
+        if (t >= 1 && t <= totalPlayers && t !== id && ['jinshui','chasha'].includes(val)) {
+          p.prophetChecks[t] = val;
+        }
+      });
+      refreshProphetChecks(id);
+    }
+
+    // Apply badge flow
+    const hasFlow = Array.isArray(data.badgeFlow) && data.badgeFlow.length > 0;
+    if (hasFlow) {
+      const flow = data.badgeFlow.map(Number).filter(t => t >= 1 && t <= totalPlayers && t !== id);
+      if (flow.length > 0) {
+        p.badgeFlow = flow;
+        refreshBadgeFlow(id);
+      }
+    }
+
+    // 有查验或警徽流 → 一定是跳预言家
+    if ((hasChecks || hasFlow) && !p.claimedProphet) {
+      p.claimedProphet = true;
+      if (!p.roles || !p.roles.includes('prophet')) {
+        p.roles = [...(p.roles || []).filter(r => r !== 'prophet'), 'prophet'];
+        refreshRolesSection(id);
+      }
+      const btn = $(`prophet-btn-${id}`);
+      if (btn) btn.classList.add('active');
+      const flowSec = $(`badge-flow-${id}`);
+      if (flowSec) flowSec.classList.add('visible');
+      renderMatrix();
+    }
+
+    // Replace placeholder with summary in textarea
+    if (data.summary) {
+      const ta = $(`ta-${id}-${slot}`);
+      const finalText = prev + data.summary;
+      if (ta) ta.value = finalText;
+      syncSpeechFromTa(id, slot, finalText);
+    }
+
+    save();
+    renderPlayerBar();
+    renderSpeechSummary();
+    updatePreviewFromState(id, slot);
+  } catch(e) {
+    console.warn('Auto-analyze failed:', e);
+  }
+}
+
+function showToast(msg) {
+  let t = $('ai-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'ai-toast';
+    t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2a0860;color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;z-index:9999;max-width:80vw;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity = '0', 3000);
+}
+
+function buildPlayerSpeechText(p) {
+  const parts = [];
+  if (p.sheriffSpeech && p.sheriffSpeech.trim()) parts.push(`警上发言：${p.sheriffSpeech.trim()}`);
+  (p.speeches || []).forEach((s, i) => {
+    if (s && s.trim()) parts.push(`${i === 0 ? '警下发言' : 'Day'+(i+1)+'发言'}：${s.trim()}`);
+  });
+  return parts.join('\n');
+}
+
+async function summarizePlayer(id) {
+  const p = state.players[id - 1];
+  const text = buildPlayerSpeechText(p);
+  const resultEl = $(`ai-result-${id}`);
+  const btn = $(`ai-btn-${id}`);
+  if (!text) { resultEl.innerHTML = '<div class="ai-loading">该玩家暂无发言记录</div>'; return; }
+
+  const roles = (p.roles || []).map(k => ALL_ROLES.find(r => r.key === k)).filter(Boolean).map(r => r.name).join('、') || '未知';
+  const prompt = `你是狼人杀游戏分析助手。请简洁分析以下玩家的发言（3-5点，每点一行，不要废话）：
+
+玩家${id}号，身份标记：${roles}
+${text}
+
+分析要点：声称身份/阵营、对哪些人有明确判断、逻辑是否自洽、整体可信度。`;
+
+  btn.disabled = true;
+  resultEl.innerHTML = '<div class="ai-loading">AI 分析中…</div>';
+  try {
+    const result = await callGPT(prompt);
+    resultEl.innerHTML = `<div class="ai-result"><div class="ai-result-title">✨ AI 分析</div>${esc(result)}</div>`;
+  } catch(e) {
+    if (e.message !== 'no key') resultEl.innerHTML = `<div class="ai-result" style="color:#c03030">错误：${esc(e.message)}</div>`;
+    else resultEl.innerHTML = '';
+  }
+  btn.disabled = false;
+}
+
+async function analyzeAll(e) {
+  e.stopPropagation(); e.preventDefault();
+  const resultEl = $('ai-all-result');
+  const btn = e.target;
+
+  const allTexts = state.players.map(p => {
+    const t = buildPlayerSpeechText(p);
+    if (!t) return null;
+    const roles = (p.roles || []).map(k => ALL_ROLES.find(r => r.key === k)).filter(Boolean).map(r => r.name).join('、') || '未知';
+    return `【${p.id}号 · ${roles}】\n${t}`;
+  }).filter(Boolean).join('\n\n');
+
+  if (!allTexts) { resultEl.innerHTML = '<div class="ai-loading">暂无发言记录</div>'; return; }
+
+  const boardName = currentBoard && BOARDS[currentBoard] ? BOARDS[currentBoard].name : `${totalPlayers}人场`;
+  const prompt = `你是狼人杀游戏分析助手。请分析以下${totalPlayers}人局（${boardName}）的全场发言记录：
+
+${allTexts}
+
+请输出：
+1. 可疑玩家排序（从高到低）及理由
+2. 发言中的逻辑矛盾或可疑点
+3. 推荐投票目标及理由
+
+回答简洁，每条一行，不要废话。`;
+
+  btn.disabled = true;
+  resultEl.innerHTML = '<div class="ai-loading">AI 全场分析中…</div>';
+  try {
+    const result = await callGPT(prompt);
+    resultEl.innerHTML = `<div class="ai-result"><div class="ai-result-title">✨ 全场 AI 分析</div>${esc(result)}</div>`;
+  } catch(e) {
+    if (e.message !== 'no key') resultEl.innerHTML = `<div class="ai-result" style="color:#c03030">错误：${esc(e.message)}</div>`;
+    else resultEl.innerHTML = '';
+  }
+  btn.disabled = false;
+}
+
+function copySummary(e) {
+  e.stopPropagation(); e.preventDefault();
+  const lines = [];
+  state.players.forEach(p => {
+    const parts = [];
+    if (p.sheriffSpeech && p.sheriffSpeech.trim()) parts.push(`警上：${p.sheriffSpeech.trim()}`);
+    (p.speeches || []).forEach((s, i) => {
+      if (s && s.trim()) parts.push(`${i === 0 ? '警下' : 'Day'+(i+1)}：${s.trim()}`);
+    });
+    if (parts.length) lines.push(`【${p.id}号】\n${parts.join('\n')}`);
+  });
+  const text = lines.join('\n\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = e.target;
+    btn.textContent = '已复制 ✓';
+    setTimeout(() => btn.textContent = '复制全部', 1500);
+  });
+}
+
+function renderPlayerBar() {
+  const bar = $('playerBar');
+  if (!bar) return;
+  bar.innerHTML = state.players.map(p => {
+    const playerRoles = (p.roles || []).map(k => ALL_ROLES.find(r => r.key === k)).filter(Boolean);
+    const ev = getDominantEval(p.evaluations);
+    let cls = 'pbar-chip';
+    if (!p.alive) cls += ' dead';
+    const evStyle = ev
+      ? `background:${ev.bg};border-color:${ev.border};`
+      : '';
+    const evLine = ev
+      ? `<div class="pbar-eval" style="color:${ev.text}">${ev.label}</div>`
+      : '';
+    const roleLine = playerRoles.length > 0
+      ? playerRoles.map(r => `<div class="pbar-role role-${r.key}">${r.name}</div>`).join('')
+      : '';
+    return `<div class="${cls}" style="${evStyle}" onclick="focusPlayer(${p.id})">
+      <div class="pbar-num">${p.id}</div>
+      ${evLine}
+      ${roleLine}
+    </div>`;
+  }).join('');
+}
+
+function focusPlayer(id) {
+  const card = $(`card-${id}`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  card.classList.remove('highlight');
+  void card.offsetWidth; // reflow to restart animation
+  card.classList.add('highlight');
+  setTimeout(() => card.classList.remove('highlight'), 800);
+}
+
+// ── Persist ────────────────────────────────────────────────────────────────
+function save() {
+  state.totalPlayers = totalPlayers;
+  try { localStorage.setItem('ww_state_v1', JSON.stringify(state)); } catch (_) {}
+  renderPlayerBar();
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('ww_state_v1');
+    if (raw) {
+      state = JSON.parse(raw);
+      // migrate: fill in any missing fields added in later versions
+      state.players.forEach(p => {
+        if (!p.badgeFlow)       p.badgeFlow = [];
+        if (!p.judgments)       p.judgments = {};
+        if (p.claimedProphet === undefined) p.claimedProphet = false;
+        if (p.role === undefined)           p.role = null;
+        if (!p.sheriffStatus) p.sheriffStatus = 'shang';
+        if (!p.speeches) p.speeches = [p.normalSpeech || ''];
+        if (!p.prophetChecks) p.prophetChecks = {};
+        if (!p.evaluations) p.evaluations = p.evaluation ? [p.evaluation] : [];
+        if (!p.roles) p.roles = p.role ? [p.role] : [];
+      });
+      if (state.boardKey) {
+        currentBoard = state.boardKey;
+        const sel = $('boardSelect');
+        if (sel) sel.value = currentBoard;
+      }
+      if (state.totalPlayers && (state.totalPlayers === 10 || state.totalPlayers === 12)) {
+        totalPlayers = state.totalPlayers;
+        const tsel = $('totalSelect');
+        if (tsel) tsel.value = totalPlayers;
+        const el = $('header-total');
+        if (el) el.textContent = totalPlayers + '人场';
+      }
+    }
+  } catch (_) {}
+}
+
+function printGame() {
+  // Open all collapsed <details> temporarily
+  const allDetails = document.querySelectorAll('details');
+  const wasOpen = Array.from(allDetails).map(d => d.open);
+  allDetails.forEach(d => d.open = true);
+
+  // Build a print-only speech summary and inject it
+  const summaryLines = [];
+  state.players.forEach(p => {
+    const parts = [];
+    if (p.sheriffSpeech && p.sheriffSpeech.trim()) parts.push(`警上：${p.sheriffSpeech.trim()}`);
+    (p.speeches || []).forEach((s, i) => {
+      if (s && s.trim()) parts.push(`${i === 0 ? '警下' : 'Day'+(i+1)}：${s.trim()}`);
+    });
+    if (parts.length) {
+      const roles = (p.roles || []).map(k => ALL_ROLES.find(r => r.key === k)).filter(Boolean).map(r => r.name).join('/');
+      summaryLines.push(`<div style="margin-bottom:8px"><strong>${p.id}号${roles ? ' · '+roles : ''}</strong><div style="font-size:12px;color:#333;margin-top:2px;white-space:pre-wrap">${parts.map(esc).join('\n')}</div></div>`);
+    }
+  });
+  let printEl = null;
+  if (summaryLines.length) {
+    printEl = document.createElement('div');
+    printEl.className = 'print-summary';
+    printEl.innerHTML = `<hr style="margin:10px 0"><div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">发言汇总</div>${summaryLines.join('')}`;
+    document.querySelector('main').appendChild(printEl);
+  }
+
+  window.print();
+
+  // Restore
+  allDetails.forEach((d, i) => d.open = wasOpen[i]);
+  if (printEl) printEl.remove();
+}
+
+function resetGame() {
+  if (!confirm('确定重置？所有发言和判断记录将清空。')) return;
+  state = initState();
+  state.boardKey = currentBoard;
+  state.totalPlayers = totalPlayers;
+  localStorage.removeItem('ww_state_v1');
+  renderPlayers();
+  renderMatrix();
+  renderSheriffPanel();
+  renderPlayerBar();
+  renderSpeechSummary();
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+load();
+renderBoardPanel();
+renderPlayers();
+renderMatrix();
+renderSheriffPanel();
+renderPlayerBar();
+renderSpeechSummary();
+updateApiKeyBtn();
+</script>
+</body>
+</html>

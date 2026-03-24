@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>狼人杀对局记录助手</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      background: #0d0a1a;
+      color: #e8e0ff;
+      min-height: 100vh;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      background: radial-gradient(ellipse at 50% 0%, #2a0860 0%, #0d0a1a 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: #2a0860;
+      border: 1px solid #7040c0;
+      color: #c090ff;
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 6vw, 52px);
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #c090ff 60%, #7040c0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: clamp(14px, 2.5vw, 18px);
+      color: #a080d0;
+      max-width: 520px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #7040c0, #4020a0);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 14px 36px;
+      border-radius: 30px;
+      text-decoration: none;
+      box-shadow: 0 4px 24px rgba(112, 64, 192, 0.5);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(112, 64, 192, 0.7);
+    }
+    .cta-note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #6040a0;
+    }
+
+    /* Flow diagram */
+    .flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 48px;
+      padding: 0 24px;
+    }
+    .flow-step {
+      background: #1a1228;
+      border: 1px solid #3a2060;
+      border-radius: 16px;
+      padding: 20px 24px;
+      text-align: center;
+      min-width: 130px;
+    }
+    .flow-icon { font-size: 32px; margin-bottom: 8px; }
+    .flow-label { font-size: 14px; font-weight: 700; color: #d0b8ff; margin-bottom: 4px; }
+    .flow-sub { font-size: 11px; color: #5a4080; line-height: 1.4; }
+    .flow-arrow { font-size: 20px; color: #3a2060; flex-shrink: 0; }
+
+    /* Features */
+    .features {
+      max-width: 900px;
+      margin: 72px auto 0;
+      padding: 0 24px;
+    }
+    .features h2 {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 36px;
+      color: #e0d0ff;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .feature-card {
+      background: #1a1228;
+      border: 1px solid #2a1848;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .feature-icon { font-size: 28px; margin-bottom: 10px; }
+    .feature-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: #d0b8ff; }
+    .feature-card p { font-size: 13px; color: #806898; line-height: 1.6; }
+
+    /* How to use */
+    .howto {
+      max-width: 700px;
+      margin: 72px auto 0;
+      padding: 0 24px;
+    }
+    .howto h2 {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 32px;
+      color: #e0d0ff;
+    }
+    .steps { display: flex; flex-direction: column; gap: 16px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      background: #1a1228;
+      border: 1px solid #2a1848;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      background: #2a0860;
+      border: 1px solid #7040c0;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #c090ff;
+    }
+    .step-content h3 { font-size: 14px; font-weight: 700; color: #d0b8ff; margin-bottom: 4px; }
+    .step-content p { font-size: 13px; color: #806898; line-height: 1.6; }
+    .step-content a { color: #9060e0; }
+
+    /* Detailed guide */
+    .guide-section {
+      max-width: 760px;
+      margin: 48px auto 0;
+      padding: 0 24px;
+    }
+    .guide-details {
+      background: #1a1228;
+      border: 1px solid #2a1848;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .guide-details summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+    .guide-details summary::-webkit-details-marker { display: none; }
+    .guide-details[open] summary { border-bottom: 1px solid #2a1848; }
+    .guide-summary-text { font-size: 15px; font-weight: 700; color: #d0b8ff; }
+    .guide-summary-hint { font-size: 12px; color: #5a4080; }
+    .guide-details[open] .guide-summary-hint { display: none; }
+    .guide-body {
+      padding: 8px 0 16px;
+    }
+    .guide-block {
+      padding: 18px 22px;
+      border-bottom: 1px solid #1e1530;
+    }
+    .guide-block:last-child { border-bottom: none; }
+    .guide-block-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #c0a0ff;
+      margin-bottom: 10px;
+    }
+    .guide-block p { font-size: 13px; color: #7a6090; line-height: 1.8; margin-bottom: 8px; }
+    .guide-block p:last-child { margin-bottom: 0; }
+    .guide-block ul { padding-left: 18px; margin: 6px 0 8px; }
+    .guide-block li { font-size: 13px; color: #7a6090; line-height: 1.8; }
+    .guide-block strong { color: #b090e0; font-weight: 700; }
+    .tag {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      margin: 0 2px;
+      border: 1px solid transparent;
+    }
+    .tag.wolf   { background:#fde8e8; border-color:#c03030; color:#7a0000; }
+    .tag.god    { background:#f0ebff; border-color:#6040b0; color:#38186a; }
+    .tag.witch  { background:#e8fff2; border-color:#208050; color:#083820; }
+    .tag.hunter { background:#fff5e0; border-color:#905000; color:#4a2800; }
+    .tag.guard  { background:#e8f0ff; border-color:#2060a0; color:#001840; }
+    .tag.civ    { background:#f0f0f4; border-color:#606080; color:#2c2c40; }
+    .tag.xdown  { background:#fff2e0; border-color:#d06020; color:#5a2800; }
+    .tag.x      { background:#4a4a4a; border-color:#666; color:#fff; }
+    .tag.xup    { background:#e8f0ff; border-color:#4070c0; color:#002060; }
+    .tag.good   { background:#e8f8e8; border-color:#40a040; color:#0a4020; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 60px 24px 40px;
+      margin-top: 72px;
+      border-top: 1px solid #1a1228;
+      color: #3a2860;
+      font-size: 12px;
+    }
+    footer a { color: #5030a0; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-badge">🐺 狼人杀专用记录工具</div>
+  <h1>狼人杀<br>对局记录助手</h1>
+  <p>专为狼人杀设计的发言记录工具。快速标记每位玩家的身份判断与评价，一键生成全场发言汇总，让复盘和分析更轻松。</p>
+  <a href="werewolf.html" class="cta-btn">立即使用 →</a>
+  <div class="cta-note">无需安装 · 网页直接使用 · 完全免费 · AI 录音为可选功能</div>
+
+  <!-- Flow diagram -->
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-icon">🃏</div>
+      <div class="flow-label">选择板子</div>
+      <div class="flow-sub">自动匹配角色和人数</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-icon">📝</div>
+      <div class="flow-label">记录发言</div>
+      <div class="flow-sub">手动输入或 AI 录音</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-icon">🏷️</div>
+      <div class="flow-label">标记判断与评价</div>
+      <div class="flow-sub">身份·评价·对他人判断</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="flow-icon">📋</div>
+      <div class="flow-label">查看汇总</div>
+      <div class="flow-sub">全场一览·一键复制</div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <h2>核心功能</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🃏</div>
+      <h3>多板子支持</h3>
+      <p>6 / 9 / 10 / 12 人板子，选择后自动匹配人数与角色，角色按阵营颜色区分。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📝</div>
+      <h3>分轮发言记录</h3>
+      <p>每位玩家独立卡片，按警上 / 警下 / Day1 / Day2… 分轮记录，自动保存。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏅</div>
+      <h3>警上 / 警下 & 警徽流</h3>
+      <p>一键标记上警玩家，跳预后展开警徽流与查验记录区。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <h3>对他人的判断</h3>
+      <p>记录每位玩家对其他座位的判断（好人 / 存疑 / 狼 / 观望）。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚖️</div>
+      <h3>五档评价</h3>
+      <p>明狼 · X偏下 · X · X偏上 · 明好人，颜色同步到顶部总览栏。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <h3>底部全场汇总</h3>
+      <p>按座位展示所有玩家的发言、身份、评价与判断，一键复制。</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3>AI 辅助（可选）</h3>
+      <p>配置 OpenAI Key 后开启录音转文字与自动填写，不影响手动使用。</p>
+    </div>
+  </div>
+</section>
+
+<section class="howto">
+  <h2>怎么用</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>打开页面，选择板子</h3>
+        <p>直接在浏览器打开，选择本局使用的板子（6 / 9 / 10 / 12 人均有），人数和角色自动匹配。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>标记警上 / 警下，记录发言</h3>
+        <p>竞选阶段标记上警玩家，然后在每位玩家卡片里输入发言，按轮次分类。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>标注身份、评价、对他人判断</h3>
+        <p>点选每位玩家声称的身份角色，打上五档评价，记录他对其他人的判断立场。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>查看底部全场汇总</h3>
+        <p>底部汇总面板按座位实时展示所有玩家的记录，一键复制全场内容。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Detailed guide -->
+<section class="guide-section">
+  <details class="guide-details">
+    <summary>
+      <span class="guide-summary-text">📖 详细功能介绍</span>
+      <span class="guide-summary-hint">点击展开</span>
+    </summary>
+    <div class="guide-body">
+
+      <div class="guide-block">
+        <div class="guide-block-title">🃏 选择板子</div>
+        <p>页面顶部有「选择板子」下拉菜单，涵盖 6 / 9 / 10 / 12 人多种配置。选择板子后页面会自动调整为对应人数，并在每位玩家卡片的「身份」栏展示该板子包含的角色按钮。角色按颜色区分阵营——<span class="tag wolf">狼队红</span><span class="tag god">预言家紫</span><span class="tag witch">女巫绿</span><span class="tag hunter">猎人橙</span><span class="tag guard">守卫蓝</span><span class="tag civ">平民灰</span>，方便快速辨认。</p>
+      </div>
+
+      <div class="guide-block">
+        <div class="guide-block-title">🏅 警上 / 警下</div>
+        <p>页面顶部有「警上警下」快捷面板，点击对应编号即可将玩家标记为警上（参与竞选警长）或警下（未参与）。也可以在每位玩家卡片内单独标记。警上的玩家在底部汇总中会带有「警上」标签，方便区分发言顺序。</p>
+      </div>
+
+      <div class="guide-block">
+        <div class="guide-block-title">📝 发言记录</div>
+        <p>每位玩家的卡片内分多个发言槽：</p>
+        <ul>
+          <li><strong>警上</strong>：竞选警长时的发言</li>
+          <li><strong>警下</strong>：第一天正式发言（Day1）</li>
+          <li><strong>Day2、Day3…</strong>：后续每天的发言，可点「＋添加发言」新增</li>
+        </ul>
+        <p>每个发言槽支持手动输入，也可点击右侧 🎤 按钮录音（需配置 OpenAI Key）。发言内容会实时同步到底部汇总面板。</p>
+      </div>
+
+      <div class="guide-block">
+        <div class="guide-block-title">🔍 跳预 / 警徽流 / 查验记录</div>
+        <p>玩家卡片内有「跳预」按钮，点击后展开预言家专属区域：</p>
+        <ul>
+          <li><strong>警徽流</strong>：点选警徽传递的玩家编号顺序，自动生成流向图</li>
+          <li><strong>查验记录</strong>：点选查验过的玩家编号，标记金水（好人）或查杀（狼人）</li>
+        </ul>
+        <p>若使用 AI 录音功能，系统会自动识别发言中的查验信息和警徽流，免去手动填写。</p>
+      </div>
+
+      <div class="guide-block">
+        <div class="guide-block-title">⚖️ 身份与评价</div>
+        <p>每位玩家卡片内有两行快捷标注：</p>
+        <ul>
+          <li><strong>身份</strong>：点选玩家声称的角色（如预言家、女巫等），按钮颜色与阵营对应</li>
+          <li><strong>评价</strong>：用五档评分表达你对这位玩家的判断——
+            <span class="tag wolf">明狼</span>
+            <span class="tag xdown">X偏下</span>
+            <span class="tag x">X</span>
+            <span class="tag xup">X偏上</span>
+            <span class="tag good">明好人</span>
+          </li>
+        </ul>
+        <p>评价会同步到顶部总览栏，直接用颜色标出每个座位，全场局势一目了然。</p>
+      </div>
+
+      <div class="guide-block">
+        <div class="guide-block-title">🎯 对他人的判断</div>
+        <p>玩家卡片内的「判断」区域，可以记录这位玩家对其他座位的看法。点击对应编号，在「好人 / 存疑 / 狼 / 观望」之间循环切换。这些判断会显示在底部汇总面板中，方便分析每个人的立场和逻辑。</p>
+      </div>
+
+      <div class="guide-block">
+        <div class="guide-block-title">📋 底部发言汇总</div>
+        <p>页面最底部是全场汇总面板，按座位 1–6（左列）和 7–12（右列）排列，每位玩家显示：身份角色、评价颜色、所有发言内容摘要、对他人的判断标签。点击座位编号可快速跳转到对应玩家卡片。右上角「复制」按钮可一键复制全场记录，方便截图分享或复盘分析。</p>
+      </div>
+
+      <div class="guide-block">
+        <div class="guide-block-title">🤖 AI 辅助功能（可选）</div>
+        <p>点击顶部「⚙ API Key」按钮，填入 OpenAI Key 后即可解锁：</p>
+        <ul>
+          <li><strong>录音转文字</strong>：点击 🎤 开始录音，松手后自动转录，支持狼人杀专用词汇</li>
+          <li><strong>自动发言总结</strong>：转录完成后 AI 在后台提炼要点，不阻塞下一个人录音</li>
+          <li><strong>自动填写信息</strong>：AI 识别发言中的身份声称、对他人判断、查验结果、警徽流，自动填入对应字段</li>
+        </ul>
+        <p>没有 Key 也可以完整使用所有手动记录功能，AI 仅为辅助加速。</p>
+      </div>
+
+    </div>
+  </details>
+</section>
+
+<footer>
+  <p>狼人杀对局记录助手 · 数据仅存储在本地浏览器 · 不上传任何信息</p>
+  <p style="margin-top:8px"><a href="werewolf.html">进入应用</a></p>
+</footer>
+
+</body>
+</html>
