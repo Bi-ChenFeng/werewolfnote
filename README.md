@@ -16,7 +16,7 @@
 ## 使用方式
 
 ### 在线使用
-
+访问：[https://bi-chenfeng.github.io/-/](https://bi-chenfeng.github.io/werewolfnote/)
 
 ### 本地使用
 
