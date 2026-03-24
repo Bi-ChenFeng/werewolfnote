@@ -13,11 +13,6 @@
 - **发言汇总**：底部汇总所有玩家的发言分析，一览全局
 - **本地存储**：所有数据保存在浏览器本地，刷新不丢失
 
-## 使用方式
-
-### 在线使用
-访问：[https://bi-chenfeng.github.io/-/](https://bi-chenfeng.github.io/werewolfnote/)
-
 ### 本地使用
 
 1. 下载 `werewolf.html`
