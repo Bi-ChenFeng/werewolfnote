@@ -1153,6 +1153,12 @@
     .sqp-btn.dead-dim     { opacity: 0.35; }
 
     /* ── Player overview bar ── */
+    .player-bar-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 190;
+      margin-bottom: 6px;
+    }
     .player-bar {
       display: flex;
       gap: 4px;
@@ -1160,11 +1166,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      margin-bottom: 6px;
       overflow-x: auto;
-      position: sticky;
-      top: 0;
-      z-index: 190;
     }
 
     .pbar-chip {
@@ -1351,7 +1353,9 @@
   </div>
 
   <!-- Player overview bar -->
-  <div class="player-bar" id="playerBar"></div>
+  <div class="player-bar-wrap">
+    <div class="player-bar" id="playerBar"></div>
+  </div>
 
   <!-- Overview -->
   <details class="overview">

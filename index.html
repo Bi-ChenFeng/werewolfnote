@@ -222,6 +222,19 @@
     .tag.xup    { background:#e8f0ff; border-color:#4070c0; color:#002060; }
     .tag.good   { background:#e8f8e8; border-color:#40a040; color:#0a4020; }
 
+    /* Mobile */
+    @media (max-width: 600px) {
+      .hero { padding: 48px 16px 36px; }
+      .flow { gap: 6px; margin-top: 32px; padding: 0 12px; }
+      .flow-step { min-width: 0; flex: 1 1 calc(50% - 12px); padding: 14px 10px; }
+      .flow-arrow { display: none; }
+      .features { margin-top: 48px; padding: 0 16px; }
+      .feature-grid { grid-template-columns: 1fr; gap: 10px; }
+      .howto { margin-top: 48px; padding: 0 16px; }
+      .guide-section { padding: 0 16px; }
+      footer { padding: 40px 16px 28px; }
+    }
+
     /* Footer */
     footer {
       text-align: center;
