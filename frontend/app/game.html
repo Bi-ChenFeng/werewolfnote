@@ -1379,21 +1379,37 @@
 <!-- Auth Modal -->
 <div id="authModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeAuthModal()">
   <div class="modal-box">
-    <div class="auth-tabs">
-      <div class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">登录</div>
-      <div class="auth-tab" id="registerTab" onclick="switchAuthTab('register')">注册</div>
+
+    <!-- 已登录 -->
+    <div id="authLoggedIn" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;padding:4px 0 12px">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6840c8,#4020a0);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;flex-shrink:0" id="authAvatar"></div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)" id="authUserDisplay"></div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:2px">已登录</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeAuthModal()">关闭</button>
+        <button class="btn btn-danger" onclick="logout()">退出登录</button>
+      </div>
     </div>
-    <div id="authError" style="display:none;font-size:12px;color:#c03030;background:#fde8e8;padding:6px 10px;border-radius:6px;"></div>
-    <input class="modal-input" id="authUsername" placeholder="用户名" spellcheck="false">
-    <input class="modal-input" id="authPassword" type="password" placeholder="密码">
-    <div class="modal-actions">
-      <button class="btn" onclick="closeAuthModal()">取消</button>
-      <button class="btn btn-user" id="authSubmitBtn" onclick="submitAuth()">登录</button>
+
+    <!-- 未登录 -->
+    <div id="authLoggedOut">
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">登录</div>
+        <div class="auth-tab" id="registerTab" onclick="switchAuthTab('register')">注册</div>
+      </div>
+      <div id="authError" style="display:none;font-size:12px;color:#c03030;background:#fde8e8;padding:6px 10px;border-radius:6px;margin-bottom:4px"></div>
+      <input class="modal-input" id="authUsername" placeholder="用户名" spellcheck="false">
+      <input class="modal-input" id="authPassword" type="password" placeholder="密码" style="margin-top:8px">
+      <div class="modal-actions" style="margin-top:12px">
+        <button class="btn" onclick="closeAuthModal()">取消</button>
+        <button class="btn btn-user" id="authSubmitBtn" onclick="submitAuth()">登录</button>
+      </div>
     </div>
-    <div id="logoutRow" style="display:none;text-align:center">
-      <span id="loggedInAs" style="font-size:12px;color:var(--text-muted)"></span>
-      <button class="btn btn-danger" style="margin-left:8px;font-size:11px;padding:3px 8px" onclick="logout()">退出登录</button>
-    </div>
+
   </div>
 </div>
 
@@ -2852,21 +2868,13 @@ function updateUserUI() {
 // ── Auth Modal ──────────────────────────────────────────────────────────────
 function openAuthModal() {
   if (_authToken) {
-    $('authError').style.display = 'none';
-    $('authUsername').style.display = 'none';
-    $('authPassword').style.display = 'none';
-    $('authSubmitBtn').style.display = 'none';
-    $('loginTab').style.display = 'none';
-    $('registerTab').style.display = 'none';
-    $('logoutRow').style.display = 'block';
-    $('loggedInAs').textContent = '当前登录：' + _authUser;
+    $('authLoggedIn').style.display = '';
+    $('authLoggedOut').style.display = 'none';
+    $('authAvatar').textContent = (_authUser || '?')[0].toUpperCase();
+    $('authUserDisplay').textContent = _authUser;
   } else {
-    $('authUsername').style.display = '';
-    $('authPassword').style.display = '';
-    $('authSubmitBtn').style.display = '';
-    $('loginTab').style.display = '';
-    $('registerTab').style.display = '';
-    $('logoutRow').style.display = 'none';
+    $('authLoggedIn').style.display = 'none';
+    $('authLoggedOut').style.display = '';
     switchAuthTab('login');
   }
   $('authModal').style.display = 'flex';
