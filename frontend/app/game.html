@@ -2742,9 +2742,12 @@ function focusPlayer(id) {
 }
 
 // ── Persist ────────────────────────────────────────────────────────────────
+let _dirty = false;
+
 function save() {
   state.totalPlayers = totalPlayers;
   try { localStorage.setItem('ww_state_v1', JSON.stringify(state)); } catch (_) {}
+  _dirty = true;
   renderPlayerBar();
 }
 
@@ -2826,6 +2829,7 @@ function resetGame(force) {
   renderSheriffPanel();
   renderPlayerBar();
   renderSpeechSummary();
+  _dirty = false;
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
@@ -2936,7 +2940,10 @@ function logout() {
 
 // ── 保存对局 ────────────────────────────────────────────────────────────────
 // ── 回到主页 ────────────────────────────────────────────────────────────────
-function goHome() { $('goHomeModal').style.display = 'flex'; }
+function goHome() {
+  if (!_dirty) { goHomeNoSave(); return; }
+  $('goHomeModal').style.display = 'flex';
+}
 
 function goHomeNoSave() {
   localStorage.removeItem('ww_state_v1');
@@ -2972,6 +2979,7 @@ async function saveGame() {
     });
     const data = await res.json();
     if (!res.ok) { showToast('保存失败：' + data.error); return; }
+    _dirty = false;
     closeSaveModal();
     if (_saveAndGoHome) { window.location.href = 'dashboard.html'; return; }
     showToast('对局已保存');
@@ -3044,6 +3052,7 @@ if (_loadGame) {
       if (el) el.textContent = totalPlayers + '人场';
     }
     save();
+    _dirty = false;
     renderPlayers(); renderMatrix(); renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
   } catch {}
   localStorage.removeItem('ww_load_game');
