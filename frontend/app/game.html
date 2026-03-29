@@ -2963,11 +2963,35 @@ function goHomeSaveFirst() {
 
 let _saveAndGoHome = false;
 
-function openSaveModal() {
+async function openSaveModal() {
   if (_currentGameId) { saveGame(); return; }
-  const d = new Date();
-  $('gameTitleInput').value = `${d.getMonth()+1}月${d.getDate()}日对局`;
+  $('gameTitleInput').value = '生成中…';
   $('saveModal').style.display = 'flex';
+  $('gameTitleInput').value = await buildDefaultTitle();
+}
+
+async function buildDefaultTitle() {
+  let fmt = { date: true, time: false, board: true, num: true };
+  try { fmt = JSON.parse(localStorage.getItem('ww_name_format')) || fmt; } catch {}
+  const d = new Date();
+  const parts = [];
+  if (fmt.date)  parts.push(`${d.getMonth()+1}月${d.getDate()}日`);
+  if (fmt.time)  parts.push(`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`);
+  if (fmt.board && currentBoard && BOARDS[currentBoard]) parts.push(BOARDS[currentBoard].name);
+  if (fmt.num) {
+    let n = 1;
+    if (_authToken) {
+      try {
+        const res = await fetch(`${API_BASE}/api/games`, { headers: { 'Authorization': 'Bearer ' + _authToken } });
+        const games = await res.json();
+        const today = new Date().toLocaleDateString('zh-CN');
+        n = games.filter(g => new Date(g.created_at).toLocaleDateString('zh-CN') === today).length + 1;
+      } catch {}
+    }
+    parts.push(`第${n}把`);
+  }
+  const d2 = new Date();
+  return parts.join(' ') || `${d2.getMonth()+1}月${d2.getDate()}日对局`;
 }
 function closeSaveModal() {
   $('saveModal').style.display = 'none';

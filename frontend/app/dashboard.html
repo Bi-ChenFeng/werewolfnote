@@ -112,6 +112,16 @@
     .btn-primary { background: linear-gradient(135deg, #7040c0, #4020a0); color: #fff; border-color: #7040c0; }
     .btn-danger { background: #2a1020; border-color: #601020; color: #ff8080; }
     .msg { font-size: 12px; padding: 6px 10px; border-radius: 6px; }
+    .fmt-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
+    .fmt-label { font-size: 13px; color: #d0b8ff; }
+    .fmt-label span { font-size: 11px; color: #5a4080; margin-left: 4px; }
+    .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track { position: absolute; inset: 0; background: #2a1848; border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+    .toggle input:checked + .toggle-track { background: #7040c0; }
+    .toggle-track::after { content: ''; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: transform 0.2s; }
+    .toggle input:checked + .toggle-track::after { transform: translateX(16px); }
+    .fmt-preview { font-size: 12px; color: #9070d0; background: #120a20; border-radius: 6px; padding: 7px 10px; font-family: monospace; word-break: break-all; }
     .msg.ok { background: #0a2a14; color: #40c060; }
     .msg.err { background: #2a0a0a; color: #ff6060; }
 
@@ -236,9 +246,34 @@
     <div style="font-size:12px;font-weight:700;color:#7050a0;margin-top:4px">OpenAI API Key <span id="apiKeyStatus" style="font-weight:400;font-size:11px;margin-left:6px"></span></div>
     <div style="font-size:11px;color:#5a4080;margin-bottom:4px">用于录音转文字和 AI 发言分析，Key 仅存在本地浏览器。</div>
     <input class="modal-input" type="password" id="apiKeyInput" placeholder="sk-..." spellcheck="false">
+    <div class="modal-actions" style="margin-bottom:4px">
+      <button class="btn btn-primary" onclick="saveApiKey()">保存 Key</button>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #2a1848;margin:4px 0">
+
+    <div style="font-size:12px;font-weight:700;color:#7050a0;margin-top:4px">默认对局名称</div>
+    <div style="font-size:11px;color:#5a4080;margin-bottom:2px">选择名称包含的内容（顺序固定）</div>
+    <div class="fmt-row">
+      <div class="fmt-label">日期 <span>3月30日</span></div>
+      <label class="toggle"><input type="checkbox" id="fmt-date" onchange="updateFmtPreview()"><div class="toggle-track"></div></label>
+    </div>
+    <div class="fmt-row">
+      <div class="fmt-label">时间 <span>14:30</span></div>
+      <label class="toggle"><input type="checkbox" id="fmt-time" onchange="updateFmtPreview()"><div class="toggle-track"></div></label>
+    </div>
+    <div class="fmt-row">
+      <div class="fmt-label">板子 <span>奇迹商人</span></div>
+      <label class="toggle"><input type="checkbox" id="fmt-board" onchange="updateFmtPreview()"><div class="toggle-track"></div></label>
+    </div>
+    <div class="fmt-row">
+      <div class="fmt-label">序号 <span>第N把</span></div>
+      <label class="toggle"><input type="checkbox" id="fmt-num" onchange="updateFmtPreview()"><div class="toggle-track"></div></label>
+    </div>
+    <div class="fmt-preview" id="fmtPreview"></div>
     <div class="modal-actions">
       <button class="btn" onclick="closeProfileModal()">关闭</button>
-      <button class="btn btn-primary" onclick="saveApiKey()">保存 Key</button>
+      <button class="btn btn-primary" onclick="saveFmt()">保存设置</button>
     </div>
   </div>
 </div>
@@ -379,13 +414,49 @@ async function delGame(id, el) {
 }
 
 // ── 个人设置 Modal ────────────────────────────────────────────────────────
+const DEFAULT_FMT = { date: true, time: false, board: true, num: true };
+
+function loadFmt() {
+  try { return JSON.parse(localStorage.getItem('ww_name_format')) || DEFAULT_FMT; }
+  catch { return DEFAULT_FMT; }
+}
+
 function openProfileModal() {
   const key = localStorage.getItem('ww_whisper_key') || '';
   document.getElementById('apiKeyInput').value = key;
   const status = document.getElementById('apiKeyStatus');
   status.textContent = key ? '✓ 已设置' : '未设置';
   status.style.color = key ? '#40c060' : '#7050a0';
+
+  const fmt = loadFmt();
+  document.getElementById('fmt-date').checked  = !!fmt.date;
+  document.getElementById('fmt-time').checked  = !!fmt.time;
+  document.getElementById('fmt-board').checked = !!fmt.board;
+  document.getElementById('fmt-num').checked   = !!fmt.num;
+  updateFmtPreview();
+
   document.getElementById('profileModal').style.display = 'flex';
+}
+
+function updateFmtPreview() {
+  const d = new Date();
+  const parts = [];
+  if (document.getElementById('fmt-date').checked)  parts.push(`${d.getMonth()+1}月${d.getDate()}日`);
+  if (document.getElementById('fmt-time').checked)  parts.push(`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`);
+  if (document.getElementById('fmt-board').checked) parts.push('奇迹商人');
+  if (document.getElementById('fmt-num').checked)   parts.push('第1把');
+  document.getElementById('fmtPreview').textContent = parts.length ? parts.join(' ') : '（空）';
+}
+
+function saveFmt() {
+  const fmt = {
+    date:  document.getElementById('fmt-date').checked,
+    time:  document.getElementById('fmt-time').checked,
+    board: document.getElementById('fmt-board').checked,
+    num:   document.getElementById('fmt-num').checked,
+  };
+  localStorage.setItem('ww_name_format', JSON.stringify(fmt));
+  showMsg('命名格式已保存', 'ok');
 }
 function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
