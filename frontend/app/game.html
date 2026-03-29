@@ -223,34 +223,6 @@
 
     .legend-hint { color: var(--text-dim); font-size: 11px; margin-left: 4px; }
 
-    /* ── Overview matrix ── */
-    .overview {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0;
-      margin-bottom: 6px;
-      overflow: hidden;
-    }
-
-    .overview summary {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 5px 12px;
-      cursor: pointer;
-      list-style: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      user-select: none;
-    }
-    .overview summary::before { content: '▶'; font-size: 7px; transition: transform 0.15s; }
-    .overview[open] summary::before { transform: rotate(90deg); }
-
-    .overview .matrix-wrap { padding: 0 10px 10px; }
 
     /* ── Speech summary ── */
     .speech-summary-section {
@@ -332,47 +304,6 @@
       margin-bottom: 6px;
     }
 
-    .matrix-wrap { overflow-x: auto; }
-
-    .matrix-table {
-      border-collapse: collapse;
-      font-size: 12px;
-      min-width: 500px;
-    }
-
-    .matrix-table th, .matrix-table td {
-      padding: 3px 4px;
-      text-align: center;
-      border: 1px solid var(--border);
-    }
-
-    .matrix-table thead th {
-      color: var(--text-muted);
-      font-size: 11px;
-      background: var(--surface2);
-    }
-
-    .matrix-table tbody td:first-child {
-      font-weight: 700;
-      font-size: 13px;
-      background: var(--surface2);
-    }
-
-    .m-cell {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
-      font-weight: 800;
-      font-size: 10px;
-    }
-
-    .m-good { background: var(--good-light); color: #fff; }
-    .m-wolf { background: var(--wolf-light); color: #fff; }
-    .m-uncertain { background: var(--uncertain-light); color: #fff; }
-    .m-watching { background: var(--watching-light); color: #fff; }
 
     /* ── Players layout ── */
     .players-layout {
@@ -1304,7 +1235,6 @@
       header .header-actions { display: none; }
       .sheriff-quick-panel { display: none; }
       .player-bar-wrap { display: none; }
-      .overview { display: none; }
       .speech-summary-section { display: none; }
       .btn-pdf, .btn-danger, .btn-ai, .prophet-btn,
       .add-speech-btn, .remove-speech-btn, .btn-ai-summarize, .mic-btn,
@@ -1465,19 +1395,18 @@
     <div class="player-bar" id="playerBar"></div>
   </div>
 
-  <!-- Overview -->
-  <details class="overview">
-    <summary>判断总览矩阵（行=判断者 · 列=被判断）</summary>
-    <div class="matrix-wrap">
-      <table class="matrix-table" id="overviewMatrix"></table>
-    </div>
-  </details>
-
   <!-- Players -->
   <div class="players-layout">
     <div class="players-col" id="colLeft"></div>
     <div class="players-col" id="colRight"></div>
   </div>
+
+  <!-- Speech summary -->
+  <details class="speech-summary-section" id="speechSummarySection">
+    <summary>发言汇总<button class="ss-copy-btn" onclick="copySummary(event)">复制全部</button><button id="allAnalyzeBtn" class="btn-ai-summarize" style="margin-left:4px;display:none" onclick="analyzeAll(event)">✨ 全场分析</button></summary>
+    <div id="speechSummaryBody"></div>
+    <div id="ai-all-result" style="padding:0 10px 10px"></div>
+  </details>
 
   <!-- Settlement -->
   <details class="settlement" id="settlementPanel">
@@ -1491,13 +1420,6 @@
       </div>
       <div id="settlePlayers"></div>
     </div>
-  </details>
-
-  <!-- Speech summary -->
-  <details class="speech-summary-section" id="speechSummarySection">
-    <summary>发言汇总<button class="ss-copy-btn" onclick="copySummary(event)">复制全部</button><button id="allAnalyzeBtn" class="btn-ai-summarize" style="margin-left:4px;display:none" onclick="analyzeAll(event)">✨ 全场分析</button></summary>
-    <div id="speechSummaryBody"></div>
-    <div id="ai-all-result" style="padding:0 10px 10px"></div>
   </details>
 
 </main>
@@ -1670,7 +1592,7 @@ function selectBoard(key) {
     }
   }
   renderPlayers();
-  renderMatrix();
+  
   renderPlayerBar();
   const sp = document.getElementById('settlementPanel');
   if (sp && sp.open) renderSettlement();
@@ -1687,7 +1609,7 @@ function selectTotal(n) {
   state.totalPlayers = totalPlayers;
   localStorage.removeItem('ww_state_v1');
   renderPlayers();
-  renderMatrix();
+  
   renderSheriffPanel();
   renderPlayerBar();
   renderSpeechSummary();
@@ -1801,7 +1723,7 @@ function toggleProphet(id) {
   if (btn) btn.classList.toggle('active', p.claimedProphet);
   const flowSec = $(`badge-flow-${id}`);
   if (flowSec) flowSec.classList.toggle('visible', p.claimedProphet);
-  renderMatrix();
+  
   save();
 }
 
@@ -1947,7 +1869,7 @@ function refreshEvalSection(id) {
     const btn = $(`ev-fixed-${id}-${i}`);
     if (btn) btn.classList.toggle('active', evals.includes(e.key));
   });
-  renderMatrix();
+  
   renderPlayerBar();
 }
 
@@ -1969,7 +1891,7 @@ function toggleJudgment(fromId, toId) {
   if (nxt === null) delete p.judgments[toId];
   else p.judgments[toId] = nxt;
   refreshJudgments(fromId);
-  renderMatrix();
+  
   save();
 }
 
@@ -1982,7 +1904,7 @@ function toggleDead(id) {
   status.textContent = p.alive ? '存活' : '已出局';
   btn.className = 'btn-toggle-dead ' + (p.alive ? 'alive-state' : 'dead-state');
   btn.textContent = p.alive ? '出局' : '复活';
-  renderMatrix();
+  
   save();
 }
 
@@ -2105,46 +2027,6 @@ function refreshJudgments(fromId) {
 }
 
 // ── Matrix ─────────────────────────────────────────────────────────────────
-function renderMatrix() {
-  const ids = Array.from({ length: totalPlayers }, (_, i) => i + 1);
-  const colColors = id => state.players[id-1].alive ? 'var(--text)' : 'var(--text-dim)';
-  const rowColors = id => state.players[id-1].alive ? 'var(--text)' : 'var(--text-dim)';
-
-  let h = '<thead><tr><th style="background:var(--surface2);color:var(--text-muted)">↓\\→</th>';
-  ids.forEach(id => {
-    const p = state.players[id - 1];
-    const evHtml = (p.evaluations && p.evaluations.length)
-      ? '<br>' + p.evaluations.map(v => {
-          const c = v.endsWith('上') ? 'var(--good-light)' : v.endsWith('下') ? 'var(--wolf-light)' : 'var(--text-muted)';
-          return `<span style="font-size:9px;font-weight:700;color:${c}">${v}</span>`;
-        }).join(' ')
-      : '';
-    const prHtml = p.claimedProphet ? `<br><span class="eval-badge badge-prophet" style="font-size:9px">跳预</span>` : '';
-    h += `<th style="color:${colColors(id)}">${id}${evHtml}${prHtml}</th>`;
-  });
-  h += '</tr></thead><tbody>';
-
-  ids.forEach(fid => {
-    const p = state.players[fid - 1];
-    h += `<tr><td style="color:${rowColors(fid)}">${fid}</td>`;
-    ids.forEach(tid => {
-      if (fid === tid) {
-        h += '<td style="background:var(--surface2);color:var(--text-dim)">·</td>';
-      } else {
-        const j = p.judgments[tid];
-        if (j) {
-          h += `<td><div class="m-cell m-${j}">${SHORT[j]}</div></td>`;
-        } else {
-          h += '<td></td>';
-        }
-      }
-    });
-    h += '</tr>';
-  });
-
-  h += '</tbody>';
-  $('overviewMatrix').innerHTML = h;
-}
 
 // ── Player cards ───────────────────────────────────────────────────────────
 function renderPlayers() {
@@ -2534,7 +2416,7 @@ async function autoAnalyzeSpeech(id, slot, prev, rawText) {
         if (btn) btn.classList.add('active');
         const flowSec = $(`badge-flow-${id}`);
         if (flowSec) flowSec.classList.add('visible');
-        renderMatrix();
+        
       }
     }
 
@@ -2581,7 +2463,7 @@ async function autoAnalyzeSpeech(id, slot, prev, rawText) {
       if (btn) btn.classList.add('active');
       const flowSec = $(`badge-flow-${id}`);
       if (flowSec) flowSec.classList.add('visible');
-      renderMatrix();
+      
     }
 
     // Replace placeholder with summary in textarea
@@ -2827,7 +2709,7 @@ function resetGame(force) {
   state.totalPlayers = totalPlayers;
   localStorage.removeItem('ww_state_v1');
   renderPlayers();
-  renderMatrix();
+  
   renderSheriffPanel();
   renderPlayerBar();
   renderSpeechSummary();
@@ -2842,7 +2724,7 @@ function updateHeaderHeight() {
 load();
 renderBoardPanel();
 renderPlayers();
-renderMatrix();
+
 renderSheriffPanel();
 renderPlayerBar();
 renderSpeechSummary();
@@ -3059,7 +2941,7 @@ async function loadGame(id) {
     const game = await res.json();
     Object.assign(state, game.data);
     save();
-    renderPlayers(); renderMatrix(); renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
+    renderPlayers();  renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
     closeHistoryModal();
     showToast('已载入：' + game.title);
   } catch { showToast('载入失败'); }
@@ -3097,7 +2979,7 @@ if (_loadGame) {
     }
     save();
     _dirty = false;
-    renderPlayers(); renderMatrix(); renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
+    renderPlayers();  renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
   } catch {}
   localStorage.removeItem('ww_load_game');
   localStorage.removeItem('ww_load_game_id');
