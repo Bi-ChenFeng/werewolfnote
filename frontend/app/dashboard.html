@@ -182,7 +182,7 @@
   <!-- 快捷操作 -->
   <div class="section-title">快捷操作</div>
   <div class="actions">
-    <a href="werewolf.html?new=1" class="action-card primary">
+    <a href="game.html?new=1" class="action-card primary">
       <div class="action-icon">🎯</div>
       <div class="action-title">开始新对局</div>
       <div class="action-desc">进入记录页面，开始新一局狼人杀</div>
@@ -240,7 +240,7 @@ const username = localStorage.getItem('ww_user');
 
 // 未登录跳转
 if (!token) {
-  window.location.href = 'index.html';
+  window.location.href = '../index.html';
 }
 
 // 显示用户信息
@@ -251,7 +251,7 @@ document.getElementById('welcomeText').textContent = '欢迎回来，' + usernam
 function logout() {
   localStorage.removeItem('ww_token');
   localStorage.removeItem('ww_user');
-  window.location.href = 'index.html';
+  window.location.href = '../index.html';
 }
 
 // ── 加载历史记录 ──────────────────────────────────────────────────────────
@@ -343,7 +343,7 @@ async function loadGame(id) {
     const res = await fetch(`${API}/api/games/${id}`, { headers: { 'Authorization': 'Bearer ' + token } });
     const game = await res.json();
     localStorage.setItem('ww_load_game', JSON.stringify(game.data));
-    window.location.href = 'werewolf.html';
+    window.location.href = 'game.html';
   } catch { alert('载入失败'); }
 }
 
@@ -353,7 +353,7 @@ async function printGame(id) {
     const game = await res.json();
     localStorage.setItem('ww_load_game', JSON.stringify(game.data));
     localStorage.setItem('ww_print_on_load', '1');
-    window.location.href = 'werewolf.html';
+    window.location.href = 'game.html';
   } catch { alert('载入失败'); }
 }
 
