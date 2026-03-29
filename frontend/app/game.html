@@ -2953,14 +2953,19 @@ function goHomeNoSave() {
 function goHomeSaveFirst() {
   $('goHomeModal').style.display = 'none';
   _saveAndGoHome = true;
-  openSaveModal();
+  if (_currentGameId) {
+    // 已有记录，直接覆盖保存，无需弹窗
+    saveGame();
+  } else {
+    openSaveModal();
+  }
 }
 
 let _saveAndGoHome = false;
 
 function openSaveModal() {
   const d = new Date();
-  $('gameTitleInput').value = `${d.getMonth()+1}月${d.getDate()}日对局`;
+  $('gameTitleInput').value = _currentGameTitle || `${d.getMonth()+1}月${d.getDate()}日对局`;
   $('saveModal').style.display = 'flex';
 }
 function closeSaveModal() {
@@ -2969,20 +2974,27 @@ function closeSaveModal() {
 }
 
 async function saveGame() {
-  const title = $('gameTitleInput').value.trim() || '未命名对局';
   const board = state.boardKey || '';
+  const isUpdate = !!_currentGameId;
+  const title = isUpdate
+    ? (_currentGameTitle || '未命名对局')
+    : ($('gameTitleInput').value.trim() || '未命名对局');
   try {
-    const res = await fetch(`${API_BASE}/api/games`, {
-      method: 'POST',
+    const url = isUpdate ? `${API_BASE}/api/games/${_currentGameId}` : `${API_BASE}/api/games`;
+    const method = isUpdate ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _authToken },
       body: JSON.stringify({ title, board_type: board, data: state })
     });
     const data = await res.json();
     if (!res.ok) { showToast('保存失败：' + data.error); return; }
+    if (!isUpdate && data.id) _currentGameId = data.id;
+    _currentGameTitle = title;
     _dirty = false;
     closeSaveModal();
     if (_saveAndGoHome) { window.location.href = 'dashboard.html'; return; }
-    showToast('对局已保存');
+    showToast(isUpdate ? '对局已更新' : '对局已保存');
   } catch { showToast('无法连接到服务器'); }
 }
 
@@ -3037,10 +3049,14 @@ async function deleteGame(id, el) {
 }
 
 // 从主页载入对局
+let _currentGameId   = null;
+let _currentGameTitle = null;
 const _loadGame = localStorage.getItem('ww_load_game');
 if (_loadGame) {
   try {
     Object.assign(state, JSON.parse(_loadGame));
+    _currentGameId    = localStorage.getItem('ww_load_game_id') || null;
+    _currentGameTitle = localStorage.getItem('ww_load_game_title') || null;
     if (state.boardKey) {
       currentBoard = state.boardKey;
       const sel = $('boardSelect');
@@ -3056,6 +3072,8 @@ if (_loadGame) {
     renderPlayers(); renderMatrix(); renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
   } catch {}
   localStorage.removeItem('ww_load_game');
+  localStorage.removeItem('ww_load_game_id');
+  localStorage.removeItem('ww_load_game_title');
 }
 
 // ── 结算 ────────────────────────────────────────────────────────────────────

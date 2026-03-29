@@ -96,6 +96,20 @@ app.get('/api/games/:id', auth, async (req, res) => {
   }
 });
 
+// ── 更新对局 ────────────────────────────────────────────────────────────────
+app.put('/api/games/:id', auth, async (req, res) => {
+  const { title, board_type, data } = req.body;
+  try {
+    await pool.query(
+      'UPDATE games SET title=?, board_type=?, data=? WHERE id=? AND user_id=?',
+      [title, board_type || '', JSON.stringify(data), req.params.id, req.user.id]
+    );
+    res.json({ message: '更新成功' });
+  } catch (e) {
+    res.status(500).json({ error: '更新失败' });
+  }
+});
+
 // ── 删除对局 ────────────────────────────────────────────────────────────────
 app.delete('/api/games/:id', auth, async (req, res) => {
   try {

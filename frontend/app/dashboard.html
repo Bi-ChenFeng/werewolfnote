@@ -353,6 +353,8 @@ async function loadGame(id) {
     const res = await fetch(`${API}/api/games/${id}`, { headers: { 'Authorization': 'Bearer ' + token } });
     const game = await res.json();
     localStorage.setItem('ww_load_game', JSON.stringify(game.data));
+    localStorage.setItem('ww_load_game_id', game.id);
+    localStorage.setItem('ww_load_game_title', game.title);
     window.location.href = 'game.html';
   } catch { alert('载入失败'); }
 }
@@ -362,6 +364,8 @@ async function printGame(id) {
     const res = await fetch(`${API}/api/games/${id}`, { headers: { 'Authorization': 'Bearer ' + token } });
     const game = await res.json();
     localStorage.setItem('ww_load_game', JSON.stringify(game.data));
+    localStorage.setItem('ww_load_game_id', game.id);
+    localStorage.setItem('ww_load_game_title', game.title);
     localStorage.setItem('ww_print_on_load', '1');
     window.location.href = 'game.html';
   } catch { alert('载入失败'); }
