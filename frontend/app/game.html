@@ -1369,7 +1369,7 @@
         <option value="basic_9">9人基础</option>
       </optgroup>
     </select>
-<button class="btn" id="homeBtn" onclick="window.location.href='dashboard.html'" style="display:none">← 主页</button>
+<button class="btn" id="homeBtn" onclick="goHome()" style="display:none">← 主页</button>
 <button class="btn btn-save" id="saveGameBtn" onclick="openSaveModal()" style="display:none">💾 保存对局</button>
 <button class="btn btn-user" id="userBtn" onclick="openAuthModal()">登录</button>
 <button class="btn btn-danger" onclick="resetGame()">重置游戏</button>
@@ -1398,6 +1398,19 @@
 </div>
 
 <!-- Save Game Modal -->
+<!-- Go Home Modal -->
+<div id="goHomeModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)$('goHomeModal').style.display='none'">
+  <div class="modal-box">
+    <div class="modal-title">返回主页</div>
+    <div class="modal-desc">是否保存当前对局记录？</div>
+    <div class="modal-actions" style="flex-direction:column;gap:8px">
+      <button class="btn btn-save" style="width:100%" onclick="goHomeSaveFirst()">💾 保存并返回</button>
+      <button class="btn" style="width:100%;color:#c03030;border-color:#c03030" onclick="goHomeNoSave()">不保存，直接返回</button>
+      <button class="btn" style="width:100%" onclick="$('goHomeModal').style.display='none'">取消</button>
+    </div>
+  </div>
+</div>
+
 <div id="saveModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeSaveModal()">
   <div class="modal-box">
     <div class="modal-title">保存对局</div>
@@ -2914,12 +2927,31 @@ function logout() {
 }
 
 // ── 保存对局 ────────────────────────────────────────────────────────────────
+// ── 回到主页 ────────────────────────────────────────────────────────────────
+function goHome() { $('goHomeModal').style.display = 'flex'; }
+
+function goHomeNoSave() {
+  localStorage.removeItem('ww_state_v1');
+  window.location.href = 'dashboard.html';
+}
+
+function goHomeSaveFirst() {
+  $('goHomeModal').style.display = 'none';
+  _saveAndGoHome = true;
+  openSaveModal();
+}
+
+let _saveAndGoHome = false;
+
 function openSaveModal() {
   const d = new Date();
   $('gameTitleInput').value = `${d.getMonth()+1}月${d.getDate()}日对局`;
   $('saveModal').style.display = 'flex';
 }
-function closeSaveModal() { $('saveModal').style.display = 'none'; }
+function closeSaveModal() {
+  $('saveModal').style.display = 'none';
+  _saveAndGoHome = false;
+}
 
 async function saveGame() {
   const title = $('gameTitleInput').value.trim() || '未命名对局';
@@ -2933,6 +2965,7 @@ async function saveGame() {
     const data = await res.json();
     if (!res.ok) { showToast('保存失败：' + data.error); return; }
     closeSaveModal();
+    if (_saveAndGoHome) { window.location.href = 'dashboard.html'; return; }
     showToast('对局已保存');
   } catch { showToast('无法连接到服务器'); }
 }
