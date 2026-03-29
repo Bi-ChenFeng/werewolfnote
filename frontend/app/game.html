@@ -2993,8 +2993,9 @@ async function saveGame() {
     if (!isUpdate && data.id) _currentGameId = data.id;
     _currentGameTitle = title;
     _dirty = false;
+    const goHome = _saveAndGoHome;
     closeSaveModal();
-    if (_saveAndGoHome) { window.location.href = 'dashboard.html'; return; }
+    if (goHome) { window.location.href = 'dashboard.html'; return; }
     showToast(isUpdate ? '对局已更新' : '对局已保存');
   } catch { showToast('无法连接到服务器'); }
 }
