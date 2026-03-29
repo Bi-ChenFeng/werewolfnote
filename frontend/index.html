@@ -161,6 +161,8 @@ function switchTab(tab) {
   document.getElementById('tab-register').classList.toggle('active', tab === 'register');
   document.getElementById('submitBtn').textContent = tab === 'login' ? '登录' : '注册';
   document.getElementById('errMsg').style.display = 'none';
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
 }
 
 function showError(msg) {
