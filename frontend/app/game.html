@@ -1672,6 +1672,8 @@ function selectBoard(key) {
   renderPlayers();
   renderMatrix();
   renderPlayerBar();
+  const sp = document.getElementById('settlementPanel');
+  if (sp && sp.open) renderSettlement();
   save();
 }
 
@@ -3158,7 +3160,8 @@ function getRoleColor(key) {
   if (witchKeys.includes(key)) return { bg:'#e8fff2', border:'#208050', text:'#083820' };
   if (hunterKeys.includes(key)) return { bg:'#fff5e0', border:'#905000', text:'#4a2800' };
   if (guardKeys.includes(key)) return { bg:'#e8f0ff', border:'#2060a0', text:'#001840' };
-  return { bg:'var(--surface2)', border:'var(--border)', text:'var(--text)' };
+  if (key === 'villager') return { bg:'#e8e8ec', border:'#6a6a7a', text:'#1a1a2a' };
+  return { bg:'#fdf8ec', border:'#a08030', text:'#4a3800' };
 }
 
 function setRealRole(seat, roleKey) {
