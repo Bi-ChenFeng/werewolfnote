@@ -2964,8 +2964,9 @@ function goHomeSaveFirst() {
 let _saveAndGoHome = false;
 
 function openSaveModal() {
+  if (_currentGameId) { saveGame(); return; }
   const d = new Date();
-  $('gameTitleInput').value = _currentGameTitle || `${d.getMonth()+1}月${d.getDate()}日对局`;
+  $('gameTitleInput').value = `${d.getMonth()+1}月${d.getDate()}日对局`;
   $('saveModal').style.display = 'flex';
 }
 function closeSaveModal() {
