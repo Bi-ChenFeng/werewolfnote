@@ -2850,15 +2850,19 @@ let _authToken = localStorage.getItem('ww_token') || null;
 let _authUser  = localStorage.getItem('ww_user')  || null;
 
 function updateUserUI() {
-  const btn = $('userBtn');
+  _authToken = localStorage.getItem('ww_token') || null;
+  _authUser  = localStorage.getItem('ww_user')  || null;
+  const btn     = $('userBtn');
   const saveBtn = $('saveGameBtn');
-  const histBtn = $('historyBtn');
+  const homeBtn = $('homeBtn');
   if (_authToken) {
-    btn.textContent = '👤 ' + _authUser;
-    saveBtn.style.display = '';
+    if (btn)     btn.textContent = '👤 ' + _authUser;
+    if (saveBtn) saveBtn.style.display = '';
+    if (homeBtn) homeBtn.style.display = '';
   } else {
-    btn.textContent = '登录';
-    saveBtn.style.display = 'none';
+    if (btn)     btn.textContent = '登录';
+    if (saveBtn) saveBtn.style.display = 'none';
+    if (homeBtn) homeBtn.style.display = 'none';
   }
 }
 
@@ -3104,7 +3108,7 @@ if (localStorage.getItem('ww_print_on_load') === '1') {
 // 新对局重置
 if (new URLSearchParams(location.search).get('new') === '1') {
   resetGame(true);
-  history.replaceState({}, '', 'werewolf.html');
+  history.replaceState({}, '', 'game.html');
 }
 
 // 显示主页按钮（已登录时）
