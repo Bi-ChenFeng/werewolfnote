@@ -3025,6 +3025,16 @@ const _loadGame = localStorage.getItem('ww_load_game');
 if (_loadGame) {
   try {
     Object.assign(state, JSON.parse(_loadGame));
+    if (state.boardKey) {
+      currentBoard = state.boardKey;
+      const sel = $('boardSelect');
+      if (sel) sel.value = currentBoard;
+    }
+    if (state.totalPlayers) {
+      totalPlayers = state.totalPlayers;
+      const el = $('header-total');
+      if (el) el.textContent = totalPlayers + '人场';
+    }
     save();
     renderPlayers(); renderMatrix(); renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
   } catch {}
