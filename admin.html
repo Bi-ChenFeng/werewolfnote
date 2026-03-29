@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 — 狼人杀记录</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif; background: #f4f6f9; color: #1c2030; min-height: 100vh; }
+    header { background: #1c2030; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 15px; font-weight: 800; }
+    #adminInfo { font-size: 12px; color: #aaa; }
+    #loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { background: #fff; border-radius: 12px; padding: 32px; width: 320px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 12px; }
+    .login-box h2 { font-size: 18px; font-weight: 800; }
+    input { width: 100%; padding: 8px 12px; border: 1.5px solid #dde1ea; border-radius: 6px; font-size: 14px; }
+    input:focus { outline: none; border-color: #4070f0; }
+    .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1ea; background: #f4f6f9; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-primary { background: #1c2030; color: #fff; border-color: #1c2030; }
+    .btn-danger { background: #fde8e8; border-color: #c03030; color: #7a0000; }
+    .error { color: #c03030; font-size: 12px; }
+    main { max-width: 1000px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 24px; }
+    .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .card h2 { font-size: 14px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+    .badge { background: #e8f0ff; color: #2060c0; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; color: #5c6478; font-size: 11px; font-weight: 700; padding: 6px 8px; border-bottom: 1px solid #eee; }
+    td { padding: 8px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .empty { text-align: center; color: #9aa3b2; padding: 24px; font-size: 13px; }
+    #mainScreen { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <h2>🐺 管理后台</h2>
+    <input type="password" id="secretInput" placeholder="管理员密码" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="loginError" class="error" style="display:none"></div>
+    <button class="btn btn-primary" onclick="doLogin()">登录</button>
+  </div>
+</div>
+
+<div id="mainScreen">
+  <header>
+    <h1>🐺 狼人杀 管理后台</h1>
+    <div id="adminInfo"></div>
+  </header>
+  <main>
+    <div class="card">
+      <h2>用户列表 <span class="badge" id="userCount">0</span></h2>
+      <table>
+        <thead><tr><th>ID</th><th>用户名</th><th>对局数</th><th>注册时间</th><th>操作</th></tr></thead>
+        <tbody id="userTable"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>对局记录 <span class="badge" id="gameCount">0</span></h2>
+      <table>
+        <thead><tr><th>ID</th><th>标题</th><th>板子</th><th>用户</th><th>时间</th><th>操作</th></tr></thead>
+        <tbody id="gameTable"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+const API = 'http://localhost:3001';
+let SECRET = '';
+
+async function doLogin() {
+  SECRET = document.getElementById('secretInput').value;
+  const res = await fetch(`${API}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ secret: SECRET })
+  });
+  if (res.ok) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainScreen').style.display = 'block';
+    loadAll();
+  } else {
+    document.getElementById('loginError').textContent = '密码错误';
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+async function loadAll() {
+  loadUsers();
+  loadGames();
+}
+
+async function loadUsers() {
+  const res = await fetch(`${API}/api/admin/users`, { headers: { 'x-admin-secret': SECRET } });
+  const users = await res.json();
+  document.getElementById('userCount').textContent = users.length;
+  const tbody = document.getElementById('userTable');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">暂无用户</td></tr>'; return; }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td>${u.id}</td>
+      <td><strong>${u.username}</strong></td>
+      <td>${u.game_count}</td>
+      <td>${new Date(u.created_at).toLocaleString('zh-CN')}</td>
+      <td><button class="btn btn-danger" onclick="deleteUser(${u.id}, this)">删除</button></td>
+    </tr>`).join('');
+}
+
+async function loadGames() {
+  const res = await fetch(`${API}/api/admin/games`, { headers: { 'x-admin-secret': SECRET } });
+  const games = await res.json();
+  document.getElementById('gameCount').textContent = games.length;
+  const tbody = document.getElementById('gameTable');
+  if (!games.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无记录</td></tr>'; return; }
+  tbody.innerHTML = games.map(g => `
+    <tr>
+      <td>${g.id}</td>
+      <td>${g.title}</td>
+      <td>${g.board_type || '-'}</td>
+      <td>${g.username}</td>
+      <td>${new Date(g.created_at).toLocaleString('zh-CN')}</td>
+      <td><button class="btn btn-danger" onclick="deleteGame(${g.id}, this)">删除</button></td>
+    </tr>`).join('');
+}
+
+async function deleteUser(id, btn) {
+  if (!confirm('删除该用户及其所有对局？')) return;
+  await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE', headers: { 'x-admin-secret': SECRET } });
+  btn.closest('tr').remove();
+  loadGames();
+}
+
+async function deleteGame(id, btn) {
+  if (!confirm('删除该对局记录？')) return;
+  await fetch(`${API}/api/admin/games/${id}`, { method: 'DELETE', headers: { 'x-admin-secret': SECRET } });
+  btn.closest('tr').remove();
+}
+</script>
+</body>
+</html>
