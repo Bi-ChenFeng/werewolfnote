@@ -1372,7 +1372,6 @@
 <button class="btn" id="homeBtn" onclick="window.location.href='dashboard.html'" style="display:none">← 主页</button>
 <button class="btn btn-save" id="saveGameBtn" onclick="openSaveModal()" style="display:none">💾 保存对局</button>
 <button class="btn btn-user" id="userBtn" onclick="openAuthModal()">登录</button>
-<button class="btn btn-ai" id="aiKeyBtn" onclick="openApiKeyModal()">⚙ API Key</button>
 <button class="btn btn-danger" onclick="resetGame()">重置游戏</button>
   </div>
 </header>
@@ -1421,20 +1420,6 @@
   </div>
 </div>
 
-<!-- API Key Modal -->
-<div id="apiKeyModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeApiKeyModal()">
-  <div class="modal-box">
-    <div class="modal-title">API Key 设置</div>
-    <div class="modal-desc">Key 仅存储在本地浏览器，不会上传到任何服务器。</div>
-    <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:2px">OpenAI Key <span style="font-weight:400">（录音转文字 + AI总结）</span></div>
-    <input class="modal-input" id="whisperKeyInput" type="password" placeholder="sk-..." spellcheck="false">
-    <div style="font-size:10px;color:var(--text-dim);margin-top:2px">在 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#7040c0">platform.openai.com</a> 获取</div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeApiKeyModal()">取消</button>
-      <button class="btn btn-ai" onclick="saveApiKey()">保存</button>
-    </div>
-  </div>
-</div>
 
 <main>
 
@@ -1481,7 +1466,7 @@
 
   <!-- Speech summary -->
   <details class="speech-summary-section" id="speechSummarySection">
-    <summary>发言汇总<button class="ss-copy-btn" onclick="copySummary(event)">复制全部</button><button class="btn-ai-summarize" style="margin-left:4px" onclick="analyzeAll(event)">✨ 全场分析</button></summary>
+    <summary>发言汇总<button class="ss-copy-btn" onclick="copySummary(event)">复制全部</button><button id="allAnalyzeBtn" class="btn-ai-summarize" style="margin-left:4px;display:none" onclick="analyzeAll(event)">✨ 全场分析</button></summary>
     <div id="speechSummaryBody"></div>
     <div id="ai-all-result" style="padding:0 10px 10px"></div>
   </details>
@@ -2028,6 +2013,7 @@ function preview(text) {
 }
 
 function micBtn(id, slot) {
+  if (!_whisperKey) return '';
   return `<button class="mic-btn" id="mic-${id}-${slot}" onclick="toggleRecord(${id},'${slot}')" title="录音">🎤</button>`;
 }
 
@@ -2057,7 +2043,7 @@ function speechesHtml(p) {
     </details>`;
   }).join('');
   const addBtn = `<button class="add-speech-btn" onclick="addSpeech(${p.id})">＋ 添加天数</button>`;
-  const aiBtn = `<button class="btn-ai-summarize" id="ai-btn-${p.id}" onclick="summarizePlayer(${p.id})">✨ AI总结</button>`;
+  const aiBtn = _whisperKey ? `<button class="btn-ai-summarize" id="ai-btn-${p.id}" onclick="summarizePlayer(${p.id})">✨ AI总结</button>` : '';
   const aiResult = `<div id="ai-result-${p.id}"></div>`;
   return sheriff + days + addBtn + aiBtn + aiResult;
 }
@@ -2290,7 +2276,7 @@ async function toggleRecord(id, slot) {
     return;
   }
 
-  if (!_whisperKey) { openApiKeyModal(); return; }
+  if (!_whisperKey) return;
 
   const ok = await initMicStream();
   if (!ok) return;
@@ -2424,28 +2410,13 @@ function setMicBtn(id, slot, on) {
 // ── AI helpers ─────────────────────────────────────────────────────────────
 let _whisperKey = localStorage.getItem('ww_whisper_key') || '';
 
-function openApiKeyModal() {
-  $('whisperKeyInput').value = _whisperKey;
-  $('apiKeyModal').style.display = 'flex';
-  setTimeout(() => $('apiKeyInput').focus(), 50);
-}
-function closeApiKeyModal() { $('apiKeyModal').style.display = 'none'; }
-function saveApiKey() {
-  _whisperKey = $('whisperKeyInput').value.trim();
-  localStorage.setItem('ww_whisper_key', _whisperKey);
-  updateApiKeyBtn();
-  closeApiKeyModal();
-}
-function updateApiKeyBtn() {
-  const btn = $('aiKeyBtn');
-  if (!btn) return;
-  const hasAny = _whisperKey;
-  if (hasAny) { btn.textContent = '✓ API Key'; btn.classList.add('has-key'); }
-  else { btn.textContent = '⚙ API Key'; btn.classList.remove('has-key'); }
+if (_whisperKey) {
+  const btn = $('allAnalyzeBtn');
+  if (btn) btn.style.display = '';
 }
 
 async function callGPT(prompt) {
-  if (!_whisperKey) { openApiKeyModal(); throw new Error('no key'); }
+  if (!_whisperKey) throw new Error('no key');
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {

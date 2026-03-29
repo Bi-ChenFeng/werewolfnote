@@ -221,14 +221,24 @@
 <div id="profileModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeProfileModal()">
   <div class="modal-box">
     <div class="modal-title">个人设置</div>
-    <div style="font-size:12px;color:#7050a0;">修改密码</div>
+
+    <div style="font-size:12px;font-weight:700;color:#7050a0;margin-top:4px">修改密码</div>
     <input class="modal-input" type="password" id="oldPwd" placeholder="当前密码">
     <input class="modal-input" type="password" id="newPwd" placeholder="新密码">
     <input class="modal-input" type="password" id="newPwd2" placeholder="确认新密码">
     <div id="profileMsg" style="display:none"></div>
+    <div class="modal-actions" style="margin-bottom:4px">
+      <button class="btn btn-primary" onclick="changePassword()">保存密码</button>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #2a1848;margin:4px 0">
+
+    <div style="font-size:12px;font-weight:700;color:#7050a0;margin-top:4px">OpenAI API Key <span id="apiKeyStatus" style="font-weight:400;font-size:11px;margin-left:6px"></span></div>
+    <div style="font-size:11px;color:#5a4080;margin-bottom:4px">用于录音转文字和 AI 发言分析，Key 仅存在本地浏览器。</div>
+    <input class="modal-input" type="password" id="apiKeyInput" placeholder="sk-..." spellcheck="false">
     <div class="modal-actions">
-      <button class="btn" onclick="closeProfileModal()">取消</button>
-      <button class="btn btn-primary" onclick="changePassword()">保存</button>
+      <button class="btn" onclick="closeProfileModal()">关闭</button>
+      <button class="btn btn-primary" onclick="saveApiKey()">保存 Key</button>
     </div>
   </div>
 </div>
@@ -364,9 +374,25 @@ async function delGame(id, el) {
   loadHistory();
 }
 
-// ── 修改密码 ──────────────────────────────────────────────────────────────
-function openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; }
+// ── 个人设置 Modal ────────────────────────────────────────────────────────
+function openProfileModal() {
+  const key = localStorage.getItem('ww_whisper_key') || '';
+  document.getElementById('apiKeyInput').value = key;
+  const status = document.getElementById('apiKeyStatus');
+  status.textContent = key ? '✓ 已设置' : '未设置';
+  status.style.color = key ? '#40c060' : '#7050a0';
+  document.getElementById('profileModal').style.display = 'flex';
+}
 function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem('ww_whisper_key', key);
+  const status = document.getElementById('apiKeyStatus');
+  status.textContent = key ? '✓ 已设置' : '未设置';
+  status.style.color = key ? '#40c060' : '#7050a0';
+  showMsg(key ? 'API Key 已保存' : 'API Key 已清除', 'ok');
+}
 
 async function changePassword() {
   const oldPwd = document.getElementById('oldPwd').value;
