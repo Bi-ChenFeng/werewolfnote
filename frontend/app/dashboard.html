@@ -372,14 +372,26 @@ function renderDetailStats(games) {
   const sorted = Object.entries(boardCount).sort((a,b) => b[1]-a[1]).slice(0, 6);
   const maxB = sorted[0]?.[1] || 1;
   document.getElementById('boardList').innerHTML = sorted.length
-    ? sorted.map(([name, cnt]) => `
+    ? sorted.map(([key, cnt]) => `
         <div class="board-row">
-          <div class="board-name">${name}</div>
+          <div class="board-name">${BOARD_NAMES[key] || key}</div>
           <div class="board-bar-track"><div class="board-bar-fill" style="width:${cnt/maxB*100}%"></div></div>
           <div class="board-count">${cnt}</div>
         </div>`).join('')
     : '<div style="font-size:12px;color:#5a4080">暂无数据</div>';
 }
+
+const BOARD_NAMES = {
+  miracle:'10人奇迹商人', yuezui_10:'10人月坠光渊', speed_10:'10人速推场',
+  beauty_10:'10人狼美人骑士', mirror_10:'10人镜隐迷踪', dark_10:'10人暗夜星辰',
+  miracle_12:'12人奇迹商人', standard_12:'12人标准场', yuezui_12:'12人月坠光渊',
+  cupid_12:'12人丘比特场', beauty_12:'12人狼美人骑士', mirror_12:'12人镜隐迷踪',
+  dark_12:'12人暗夜星辰', gargoyle_12:'12人石像鬼守墓人', crimson_12:'12人赤月猎魔人',
+  cursefox_12:'12人咒狐乌鸦', lonely_12:'12人孤独少女', hunter_12:'12人猎日逐光',
+  awaken_king_12:'12人觉醒狼王', awaken_lonely_12:'12人觉醒孤独少女',
+  awaken_witch_12:'12人觉醒女巫', dream_king_12:'12人狼王摄梦人', king_guard_12:'12人狼王守卫',
+  basic_6:'6人基础', basic_9:'9人基础',
+};
 
 function escHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
