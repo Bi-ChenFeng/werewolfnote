@@ -1216,6 +1216,47 @@
     .settle-role-btn { padding: 3px 8px; border-radius: 10px; border: 1px solid var(--border); font-size: 11px; cursor: pointer; background: var(--bg); color: var(--text); transition: all 0.1s; }
     .settle-role-btn.selected { font-weight: 700; }
 
+    /* ── Vote record ── */
+    .vote-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; margin-top: 6px; overflow: hidden;
+    }
+    .vote-section > summary {
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      padding: 8px 12px; cursor: pointer; display: flex; align-items: center;
+      gap: 6px; user-select: none; list-style: none;
+    }
+    .vote-section > summary::-webkit-details-marker { display: none; }
+    .vote-section[open] > summary { border-bottom: 1px solid var(--border); }
+    .vote-section > summary::before { content: '▶'; font-size: 7px; transition: transform 0.15s; }
+    .vote-section[open] > summary::before { transform: rotate(90deg); }
+    .vote-round { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .vote-round:last-child { border-bottom: none; }
+    .vote-round-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .vote-round-label { font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px; }
+    .vote-remove-btn { font-size: 11px; color: var(--wolf-light); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+    .vote-row { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+    .vote-row.vote-dead { opacity: 0.3; pointer-events: none; }
+    .vote-seat { font-size: 12px; font-weight: 800; width: 22px; text-align: right; color: var(--text); flex-shrink: 0; }
+    .vote-arrow { font-size: 10px; color: var(--text-dim); margin: 0 2px; flex-shrink: 0; }
+    .vote-btns { display: flex; flex-wrap: wrap; gap: 3px; }
+    .vote-btn {
+      width: 22px; height: 22px; border-radius: 4px; padding: 0;
+      border: 1px solid var(--border); background: var(--surface2);
+      color: var(--text-muted); font-size: 11px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all 0.1s; line-height: 1;
+    }
+    .vote-btn:hover { border-color: var(--wolf-light); color: var(--wolf-light); }
+    .vote-btn.voted { background: var(--wolf); border-color: var(--wolf-light); color: #fff; font-weight: 800; }
+    .vote-tally { font-size: 11px; color: var(--text-muted); margin-top: 6px; padding-top: 5px; border-top: 1px dashed var(--border); }
+    .vote-tally-top { font-weight: 800; color: var(--wolf-light); }
+    .vote-add-btn {
+      width: 100%; padding: 8px; font-size: 12px; font-weight: 700;
+      color: var(--text-dim); background: none; border: none;
+      border-top: 1px solid var(--border); cursor: pointer; font-family: inherit;
+    }
+    .vote-add-btn:hover { background: var(--surface2); color: var(--text); }
+
     /* Mobile */
     @media (max-width: 600px) {
       main { padding: 6px; }
@@ -1400,6 +1441,13 @@
     <div class="players-col" id="colLeft"></div>
     <div class="players-col" id="colRight"></div>
   </div>
+
+  <!-- Vote record -->
+  <details class="vote-section" id="voteSection">
+    <summary>🗳️ 投票记录</summary>
+    <div id="voteBody"></div>
+    <button class="vote-add-btn" onclick="addVoteRound()">＋ 添加投票轮</button>
+  </details>
 
   <!-- Speech summary -->
   <details class="speech-summary-section" id="speechSummarySection">
@@ -1678,7 +1726,8 @@ function initState() {
       speeches: [''],        // [day1警下, day2, day3, ...]
       judgments: {},         // { targetId: 'good'|'wolf'|'uncertain'|'watching' }
       prophetChecks: {}      // { targetId: 'jinshui'|'chasha' }
-    }))
+    })),
+    votes: [],               // [ {seat: votedForSeat, ...}, ... ] per round
   };
 }
 
@@ -2652,6 +2701,7 @@ function load() {
         if (!p.evaluations) p.evaluations = p.evaluation ? [p.evaluation] : [];
         if (!p.roles) p.roles = p.role ? [p.role] : [];
       });
+      if (!state.votes) state.votes = [];
       if (state.boardKey) {
         currentBoard = state.boardKey;
         const sel = $('boardSelect');
@@ -2709,10 +2759,10 @@ function resetGame(force) {
   state.totalPlayers = totalPlayers;
   localStorage.removeItem('ww_state_v1');
   renderPlayers();
-  
   renderSheriffPanel();
   renderPlayerBar();
   renderSpeechSummary();
+  renderVotes();
   _dirty = false;
 }
 
@@ -2724,10 +2774,10 @@ function updateHeaderHeight() {
 load();
 renderBoardPanel();
 renderPlayers();
-
 renderSheriffPanel();
 renderPlayerBar();
 renderSpeechSummary();
+renderVotes();
 updateHeaderHeight();
 window.addEventListener('resize', updateHeaderHeight);
 
@@ -2941,7 +2991,7 @@ async function loadGame(id) {
     const game = await res.json();
     Object.assign(state, game.data);
     save();
-    renderPlayers();  renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
+    renderPlayers(); renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary(); renderVotes();
     closeHistoryModal();
     showToast('已载入：' + game.title);
   } catch { showToast('载入失败'); }
@@ -2979,7 +3029,7 @@ if (_loadGame) {
     }
     save();
     _dirty = false;
-    renderPlayers();  renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary();
+    renderPlayers(); renderSheriffPanel(); renderPlayerBar(); renderSpeechSummary(); renderVotes();
   } catch {}
   localStorage.removeItem('ww_load_game');
   localStorage.removeItem('ww_load_game_id');
@@ -3029,6 +3079,77 @@ function renderSettlement() {
 
   // 恢复结果按钮状态
   if (state.gameResult) setResult(state.gameResult);
+}
+
+// ── Vote record ────────────────────────────────────────────────────────────
+function renderVotes() {
+  const body = $('voteBody');
+  if (!body) return;
+  if (!state.votes || !state.votes.length) {
+    body.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--text-dim)">暂无投票记录，点击下方添加</div>';
+    return;
+  }
+  body.innerHTML = state.votes.map((round, ri) => {
+    // tally
+    const tally = {};
+    state.players.forEach((_, i) => {
+      const target = round[i + 1];
+      if (target) tally[target] = (tally[target] || 0) + 1;
+    });
+    const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+    const maxVotes = sorted[0]?.[1] || 0;
+    const tallyHtml = sorted.length
+      ? sorted.map(([seat, cnt]) =>
+          `<span class="${cnt === maxVotes ? 'vote-tally-top' : ''}">${seat}号 ${cnt}票</span>`
+        ).join('  ')
+      : '暂无';
+
+    const rows = state.players.map((p, i) => {
+      const seat = i + 1;
+      const voted = round[seat] || null;
+      const btns = state.players.map((_, j) => {
+        const t = j + 1;
+        if (t === seat) return '';
+        return `<button class="vote-btn${voted === t ? ' voted' : ''}" onclick="setVote(${ri},${seat},${t})">${t}</button>`;
+      }).join('');
+      return `<div class="vote-row${!p.alive ? ' vote-dead' : ''}">
+        <span class="vote-seat">${seat}</span>
+        <span class="vote-arrow">→</span>
+        <div class="vote-btns">${btns}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="vote-round">
+      <div class="vote-round-header">
+        <span class="vote-round-label">第 ${ri + 1} 轮投票</span>
+        <button class="vote-remove-btn" onclick="removeVoteRound(${ri})">删除</button>
+      </div>
+      ${rows}
+      <div class="vote-tally">结果：${tallyHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function addVoteRound() {
+  if (!state.votes) state.votes = [];
+  state.votes.push({});
+  save();
+  renderVotes();
+  $('voteSection').open = true;
+}
+
+function removeVoteRound(ri) {
+  state.votes.splice(ri, 1);
+  save();
+  renderVotes();
+}
+
+function setVote(ri, voterSeat, targetSeat) {
+  if (!state.votes[ri]) state.votes[ri] = {};
+  // toggle
+  state.votes[ri][voterSeat] = state.votes[ri][voterSeat] === targetSeat ? null : targetSeat;
+  save();
+  renderVotes();
 }
 
 function getRoleColor(key) {
