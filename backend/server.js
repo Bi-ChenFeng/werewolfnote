@@ -10,6 +10,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ── 简易限流 ────────────────────────────────────────────────────────────────
+const _rateBuckets = new Map();
+function rateLimit(maxReqs, windowMs) {
+  return (req, res, next) => {
+    const key = req.ip + req.path;
+    const now = Date.now();
+    const bucket = _rateBuckets.get(key);
+    if (!bucket || now > bucket.resetAt) {
+      _rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+      return next();
+    }
+    if (bucket.count >= maxReqs) {
+      return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+    }
+    bucket.count++;
+    next();
+  };
+}
+
 // ── 中间件：验证 JWT ────────────────────────────────────────────────────────
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
@@ -23,9 +42,11 @@ function auth(req, res, next) {
 }
 
 // ── 注册 ────────────────────────────────────────────────────────────────────
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', rateLimit(5, 60000), async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: '用户名和密码不能为空' });
+  if (username.length < 2 || username.length > 20) return res.status(400).json({ error: '用户名长度需在 2-20 位之间' });
+  if (password.length < 6) return res.status(400).json({ error: '密码至少 6 位' });
   try {
     const [rows] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
     if (rows.length > 0) return res.status(400).json({ error: '用户名已存在' });
@@ -33,12 +54,13 @@ app.post('/api/register', async (req, res) => {
     await pool.query('INSERT INTO users (username, password_hash) VALUES (?, ?)', [username, hash]);
     res.json({ message: '注册成功' });
   } catch (e) {
-    res.status(500).json({ error: '服务器错误' });
+    console.error('[register]', e);
+    res.status(500).json({ error: '注册失败，请稍后再试' });
   }
 });
 
 // ── 登录 ────────────────────────────────────────────────────────────────────
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', rateLimit(10, 60000), async (req, res) => {
   const { username, password } = req.body;
   try {
     const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
@@ -49,7 +71,8 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, username: user.username });
   } catch (e) {
-    res.status(500).json({ error: '服务器错误' });
+    console.error('[login]', e);
+    res.status(500).json({ error: '登录失败，请稍后再试' });
   }
 });
 
@@ -63,6 +86,7 @@ app.post('/api/games', auth, async (req, res) => {
     );
     res.json({ id: result.insertId, message: '保存成功' });
   } catch (e) {
+    console.error('[games:save]', e);
     res.status(500).json({ error: '保存失败' });
   }
 });
@@ -76,6 +100,7 @@ app.get('/api/games', auth, async (req, res) => {
     );
     res.json(rows);
   } catch (e) {
+    console.error('[games:list]', e);
     res.status(500).json({ error: '获取失败' });
   }
 });
@@ -92,6 +117,7 @@ app.get('/api/games/:id', auth, async (req, res) => {
     game.data = JSON.parse(game.data);
     res.json(game);
   } catch (e) {
+    console.error('[games:get]', e);
     res.status(500).json({ error: '获取失败' });
   }
 });
@@ -106,7 +132,21 @@ app.put('/api/games/:id', auth, async (req, res) => {
     );
     res.json({ message: '更新成功' });
   } catch (e) {
+    console.error('[games:put]', e);
     res.status(500).json({ error: '更新失败' });
+  }
+});
+
+// ── 重命名对局 ──────────────────────────────────────────────────────────────
+app.patch('/api/games/:id', auth, async (req, res) => {
+  const { title } = req.body;
+  if (!title || !title.trim()) return res.status(400).json({ error: '名称不能为空' });
+  try {
+    await pool.query('UPDATE games SET title=? WHERE id=? AND user_id=?', [title.trim(), req.params.id, req.user.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[games:rename]', e);
+    res.status(500).json({ error: '改名失败' });
   }
 });
 
@@ -116,6 +156,7 @@ app.delete('/api/games/:id', auth, async (req, res) => {
     await pool.query('DELETE FROM games WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
     res.json({ message: '删除成功' });
   } catch (e) {
+    console.error('[games:delete]', e);
     res.status(500).json({ error: '删除失败' });
   }
 });

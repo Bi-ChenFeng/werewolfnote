@@ -98,6 +98,19 @@
     .history-arrow { color: #3a2060; font-size: 16px; flex-shrink: 0; }
     .history-del { font-size: 12px; color: #5a3060; cursor: pointer; padding: 4px 8px; border-radius: 6px; flex-shrink: 0; }
     .history-del:hover { background: #2a1020; color: #c03030; }
+    .history-title-input {
+      font-size: 14px; font-weight: 700; color: #d0b8ff; background: #0d0a18;
+      border: 1px solid #5030a0; border-radius: 4px; padding: 2px 6px;
+      font-family: inherit; flex: 1; min-width: 0; outline: none;
+    }
+    .history-rename-btn {
+      font-size: 11px; padding: 2px 6px; border-radius: 4px; border: none;
+      cursor: pointer; font-family: inherit; flex-shrink: 0; line-height: 1.4;
+    }
+    .history-rename-btn.ok { background: #3020a0; color: #c0a8ff; }
+    .history-rename-btn.ok:hover { background: #5040c0; }
+    .history-rename-btn.cancel { background: none; color: #5a4080; }
+    .history-rename-btn.cancel:hover { color: #c03030; }
     .empty-state { text-align: center; padding: 40px 20px; color: #3a2060; }
     .empty-state p { font-size: 13px; margin-top: 8px; }
 
@@ -148,12 +161,6 @@
     .stats-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 32px; }
     .stat-detail-card { background: #1a1228; border: 1px solid #2a1848; border-radius: 12px; padding: 18px 20px; }
     .stat-detail-title { font-size: 12px; font-weight: 800; color: #7050a0; margin-bottom: 14px; letter-spacing: 0.5px; text-transform: uppercase; }
-    .win-bar-wrap { display: flex; flex-direction: column; gap: 8px; }
-    .win-bar-row { display: flex; align-items: center; gap: 8px; }
-    .win-bar-label { font-size: 12px; color: #a080d0; width: 52px; flex-shrink: 0; }
-    .win-bar-track { flex: 1; background: #0d0a1a; border-radius: 6px; height: 10px; overflow: hidden; }
-    .win-bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s; }
-    .win-bar-count { font-size: 12px; color: #5a4080; width: 24px; text-align: right; flex-shrink: 0; }
     .board-list { display: flex; flex-direction: column; gap: 6px; }
     .board-row { display: flex; align-items: center; gap: 8px; }
     .board-name { font-size: 12px; color: #a080d0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -225,10 +232,6 @@
 
   <!-- 详细统计 -->
   <div class="stats-detail" id="statsDetail" style="display:none">
-    <div class="stat-detail-card">
-      <div class="stat-detail-title">胜负统计</div>
-      <div class="win-bar-wrap" id="winBars"></div>
-    </div>
     <div class="stat-detail-card">
       <div class="stat-detail-title">常用板子</div>
       <div class="board-list" id="boardList"></div>
@@ -389,6 +392,7 @@ async function loadHistory() {
           <div class="history-meta">${g.board_type || '未知板子'} · ${new Date(g.created_at).toLocaleString('zh-CN')}${g.game_result ? ' · ' + {'good':'好人胜','wolf':'狼人胜','draw':'平局'}[g.game_result] : ''}</div>
         </div>
         <div class="history-arrow">›</div>
+        <div class="history-del" onclick="event.stopPropagation();renameGame(${g.id},this)" style="color:#6050a0">改名</div>
         <div class="history-del" onclick="event.stopPropagation();printGame(${g.id})" style="color:#4070c0" title="保存PDF">PDF</div>
         <div class="history-del" onclick="event.stopPropagation();delGame(${g.id},this)">删除</div>
       </div>`).join('');
@@ -400,24 +404,6 @@ async function loadHistory() {
 function renderDetailStats(games) {
   if (!games.length) return;
   document.getElementById('statsDetail').style.display = '';
-
-  // 胜负
-  const good = games.filter(g => g.game_result === 'good').length;
-  const wolf = games.filter(g => g.game_result === 'wolf').length;
-  const draw = games.filter(g => g.game_result === 'draw').length;
-  const withResult = good + wolf + draw;
-  const maxW = Math.max(good, wolf, draw, 1);
-  document.getElementById('winBars').innerHTML = [
-    { label: '好人胜', count: good, color: '#40a040' },
-    { label: '狼人胜', count: wolf, color: '#c03030' },
-    { label: '平局',   count: draw, color: '#606080' },
-  ].map(r => `
-    <div class="win-bar-row">
-      <div class="win-bar-label">${r.label}</div>
-      <div class="win-bar-track"><div class="win-bar-fill" style="width:${r.count/maxW*100}%;background:${r.color}"></div></div>
-      <div class="win-bar-count">${r.count}</div>
-    </div>`).join('') +
-    (withResult ? `<div style="font-size:11px;color:#5a4080;margin-top:6px">共 ${withResult} 局有结果记录</div>` : '');
 
   // 板子使用
   const boardCount = {};
@@ -463,12 +449,70 @@ async function printGame(id) {
   try {
     const res = await fetch(`${API}/api/games/${id}`, { headers: { 'Authorization': 'Bearer ' + token } });
     const game = await res.json();
+    if (!res.ok) { alert(game.error || '载入失败，请重试'); return; }
     localStorage.setItem('ww_load_game', JSON.stringify(game.data));
     localStorage.setItem('ww_load_game_id', game.id);
     localStorage.setItem('ww_load_game_title', game.title);
     localStorage.setItem('ww_print_on_load', '1');
     window.location.href = 'game.html';
-  } catch { alert('载入失败'); }
+  } catch { alert('连接失败，请检查服务器是否启动'); }
+}
+
+function renameGame(id, btn) {
+  const item = btn.closest('.history-item');
+  const titleEl = item.querySelector('.history-title');
+  const originalTitle = titleEl.textContent.trim();
+
+  titleEl.style.cssText = 'overflow:visible;white-space:normal;display:flex;align-items:center;gap:4px;';
+
+  const input = document.createElement('input');
+  input.className = 'history-title-input';
+  input.value = originalTitle;
+  input.onclick = e => e.stopPropagation();
+  input.onkeydown = e => {
+    e.stopPropagation();
+    if (e.key === 'Enter') doRename(id, input, titleEl, originalTitle);
+    if (e.key === 'Escape') doRestoreTitle(titleEl, originalTitle);
+  };
+
+  const ok = document.createElement('button');
+  ok.className = 'history-rename-btn ok';
+  ok.textContent = '✓';
+  ok.onclick = e => { e.stopPropagation(); doRename(id, input, titleEl, originalTitle); };
+
+  const cancel = document.createElement('button');
+  cancel.className = 'history-rename-btn cancel';
+  cancel.textContent = '✕';
+  cancel.onclick = e => { e.stopPropagation(); doRestoreTitle(titleEl, originalTitle); };
+
+  titleEl.innerHTML = '';
+  titleEl.appendChild(input);
+  titleEl.appendChild(ok);
+  titleEl.appendChild(cancel);
+  input.focus();
+  input.select();
+}
+
+async function doRename(id, input, titleEl, originalTitle) {
+  const newTitle = input.value.trim();
+  if (!newTitle) return;
+  try {
+    const res = await fetch(`${API}/api/games/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ title: newTitle })
+    });
+    if (!res.ok) throw new Error();
+    doRestoreTitle(titleEl, newTitle);
+  } catch {
+    alert('改名失败');
+    doRestoreTitle(titleEl, originalTitle);
+  }
+}
+
+function doRestoreTitle(titleEl, title) {
+  titleEl.style.cssText = '';
+  titleEl.textContent = title;
 }
 
 async function delGame(id, el) {
@@ -578,6 +622,7 @@ async function changePassword() {
   const oldPwd = document.getElementById('oldPwd').value;
   const newPwd = document.getElementById('newPwd').value;
   const newPwd2 = document.getElementById('newPwd2').value;
+  if (!oldPwd) { showDetailMsg('profileMsg', '请输入当前密码', 'err'); return; }
   if (newPwd !== newPwd2) { showDetailMsg('profileMsg', '两次输入的新密码不一致', 'err'); return; }
   if (newPwd.length < 6) { showDetailMsg('profileMsg', '新密码至少6位', 'err'); return; }
   try {

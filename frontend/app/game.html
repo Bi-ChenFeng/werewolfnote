@@ -1208,6 +1208,8 @@
     .result-btn.active-good { background: #e8f8e8; border-color: #40a040; color: #0a4020; }
     .result-btn.active-wolf { background: #fde8e8; border-color: #c03030; color: #7a0000; }
     .result-btn.active-draw { background: #f0f0f4; border-color: #606080; color: #2c2c40; }
+    .result-clear-btn { padding: 5px 10px; border-radius: 20px; border: 1.5px solid var(--border); font-size: 11px; font-weight: 700; cursor: pointer; background: none; color: var(--text-dim); transition: all 0.12s; }
+    .result-clear-btn:hover { border-color: var(--wolf-light); color: var(--wolf-light); }
     .settle-player { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border2); }
     .settle-player:last-child { border-bottom: none; }
     .settle-num { width: 24px; height: 24px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -1230,11 +1232,53 @@
     .vote-section[open] > summary { border-bottom: 1px solid var(--border); }
     .vote-section > summary::before { content: '▶'; font-size: 7px; transition: transform 0.15s; }
     .vote-section[open] > summary::before { transform: rotate(90deg); }
-    .vote-round { padding: 8px 12px; border-bottom: 1px solid var(--border); }
-    .vote-round:last-child { border-bottom: none; }
-    .vote-round-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .vote-round-label { font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px; }
-    .vote-remove-btn { font-size: 11px; color: var(--wolf-light); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+    /* compact summary rows */
+    .vote-summary { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+    .vote-summary:last-child { border-bottom: none; }
+    .vote-summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+    .vote-summary-label { font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px; }
+    .vote-summary-actions { display: flex; gap: 10px; }
+    .vote-summary-edit { font-size: 11px; color: var(--text-dim); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+    .vote-summary-edit:hover { color: var(--text); }
+    .vote-summary-remove { font-size: 11px; color: var(--wolf-light); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+    .vote-result-row { display: flex; align-items: baseline; gap: 4px; padding: 1px 0; font-size: 12px; line-height: 1.5; }
+    .vote-result-target { font-weight: 800; color: var(--text); min-width: 28px; }
+    .vote-result-target.top { color: var(--wolf-light); }
+    .vote-result-arrow { color: var(--text-dim); font-size: 9px; }
+    .vote-result-voters { color: var(--text-muted); }
+    .vote-result-abstain { font-size: 11px; color: var(--text-dim); padding: 1px 0; }
+    .vote-add-btn {
+      width: 100%; padding: 8px; font-size: 12px; font-weight: 700;
+      color: var(--text-dim); background: none; border: none;
+      border-top: 1px solid var(--border); cursor: pointer; font-family: inherit;
+    }
+    .vote-add-btn:hover { background: var(--surface2); color: var(--text); }
+    /* vote modal */
+    .vmodal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .vmodal-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      width: min(400px, 95vw); max-height: 82vh; overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    }
+    .vmodal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0;
+      background: var(--surface); z-index: 1;
+    }
+    .vmodal-title { font-size: 13px; font-weight: 800; color: var(--text); }
+    .vmodal-close { background: none; border: none; color: var(--text-muted); font-size: 15px; cursor: pointer; padding: 0; font-family: inherit; line-height: 1; }
+    .vmodal-body { padding: 8px 12px; }
+    .vmodal-footer {
+      padding: 8px 14px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 8px;
+      position: sticky; bottom: 0; background: var(--surface);
+    }
+    .vmodal-cancel { padding: 5px 14px; background: none; color: var(--text-muted); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .vmodal-confirm { padding: 5px 18px; background: var(--wolf); color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; }
+    /* vote buttons (used inside modal) */
     .vote-row { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
     .vote-row.vote-dead { opacity: 0.3; pointer-events: none; }
     .vote-seat { font-size: 12px; font-weight: 800; width: 22px; text-align: right; color: var(--text); flex-shrink: 0; }
@@ -1248,14 +1292,9 @@
     }
     .vote-btn:hover { border-color: var(--wolf-light); color: var(--wolf-light); }
     .vote-btn.voted { background: var(--wolf); border-color: var(--wolf-light); color: #fff; font-weight: 800; }
-    .vote-tally { font-size: 11px; color: var(--text-muted); margin-top: 6px; padding-top: 5px; border-top: 1px dashed var(--border); }
-    .vote-tally-top { font-weight: 800; color: var(--wolf-light); }
-    .vote-add-btn {
-      width: 100%; padding: 8px; font-size: 12px; font-weight: 700;
-      color: var(--text-dim); background: none; border: none;
-      border-top: 1px solid var(--border); cursor: pointer; font-family: inherit;
-    }
-    .vote-add-btn:hover { background: var(--surface2); color: var(--text); }
+    .vote-btn.vote-self { border-style: dashed; }
+    .vote-btn.vote-abstain { width: auto; padding: 0 5px; color: var(--text-dim); }
+    .vote-btn.vote-abstain.voted { background: var(--text-muted); border-color: var(--text-muted); color: #fff; }
 
     /* Mobile */
     @media (max-width: 600px) {
@@ -1465,7 +1504,9 @@
         <button class="result-btn" id="rb-good" onclick="setResult('good')">好人胜</button>
         <button class="result-btn" id="rb-wolf" onclick="setResult('wolf')">狼人胜</button>
         <button class="result-btn" id="rb-draw" onclick="setResult('draw')">平局</button>
+        <button class="result-clear-btn" id="rb-clear" onclick="clearResult()" style="display:none">清除</button>
       </div>
+      <div id="settleVoteSummary"></div>
       <div id="settlePlayers"></div>
     </div>
   </details>
@@ -1664,7 +1705,6 @@ function selectTotal(n) {
   save();
 }
 
-function renderBoardPanel() { /* panel removed */ }
 
 function toggleRole(id, key) {
   const p = state.players[id - 1];
@@ -2772,7 +2812,6 @@ function updateHeaderHeight() {
   if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
 }
 load();
-renderBoardPanel();
 renderPlayers();
 renderSheriffPanel();
 renderPlayerBar();
@@ -3038,17 +3077,57 @@ if (_loadGame) {
 
 // ── 结算 ────────────────────────────────────────────────────────────────────
 function setResult(val) {
-  state.gameResult = state.gameResult === val ? null : val;
+  state.gameResult = val;
   ['good','wolf','draw'].forEach(k => {
     const btn = document.getElementById('rb-' + k);
     if (btn) btn.className = 'result-btn' + (state.gameResult === k ? ' active-' + k : '');
   });
+  const clearBtn = document.getElementById('rb-clear');
+  if (clearBtn) clearBtn.style.display = state.gameResult ? '' : 'none';
+  save();
+}
+
+function clearResult() {
+  state.gameResult = null;
+  ['good','wolf','draw'].forEach(k => {
+    const btn = document.getElementById('rb-' + k);
+    if (btn) btn.className = 'result-btn';
+  });
+  const clearBtn = document.getElementById('rb-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
   save();
 }
 
 function renderSettlement() {
   const container = document.getElementById('settlePlayers');
   if (!container) return;
+
+  // 投票摘要
+  const voteSummaryEl = document.getElementById('settleVoteSummary');
+  if (voteSummaryEl) {
+    if (state.votes && state.votes.length) {
+      const rows = state.votes.map((round, ri) => {
+        const byTarget = {};
+        const abstainers = [];
+        state.players.forEach((_, i) => {
+          const seat = i + 1;
+          const target = round[seat];
+          if (target > 0) { if (!byTarget[target]) byTarget[target] = []; byTarget[target].push(seat); }
+          else if (target === 0) abstainers.push(seat);
+        });
+        const sorted = Object.entries(byTarget).sort((a, b) => b[1].length - a[1].length);
+        const maxV = sorted[0]?.[1].length || 0;
+        const parts = sorted.map(([t, v]) =>
+          `<span style="font-weight:${v.length === maxV ? '800' : '400'};color:${v.length === maxV ? 'var(--wolf-light)' : 'var(--text-muted)'}">
+            ${t}号←${v.join('·')}号</span>`).join('　');
+        const abstainPart = abstainers.length ? `　<span style="color:var(--text-dim)">弃:${abstainers.join('·')}号</span>` : '';
+        return `<div style="font-size:11px;padding:2px 0">第${ri+1}轮：${parts || '—'}${abstainPart}</div>`;
+      }).join('');
+      voteSummaryEl.innerHTML = `<div style="padding:6px 0 4px;border-bottom:1px dashed var(--border2);margin-bottom:4px">${rows}</div>`;
+    } else {
+      voteSummaryEl.innerHTML = '';
+    }
+  }
 
   // Get roles from current board
   const boardRoles = currentBoard && BOARDS[currentBoard]
@@ -3079,9 +3158,13 @@ function renderSettlement() {
 
   // 恢复结果按钮状态
   if (state.gameResult) setResult(state.gameResult);
+  else clearResult();
 }
 
 // ── Vote record ────────────────────────────────────────────────────────────
+let _voteModalRi = -1;
+let _voteModalDraft = {};
+
 function renderVotes() {
   const body = $('voteBody');
   if (!body) return;
@@ -3090,52 +3173,47 @@ function renderVotes() {
     return;
   }
   body.innerHTML = state.votes.map((round, ri) => {
-    // tally
-    const tally = {};
+    const byTarget = {};
+    const abstainers = [];
     state.players.forEach((_, i) => {
-      const target = round[i + 1];
-      if (target) tally[target] = (tally[target] || 0) + 1;
-    });
-    const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1]);
-    const maxVotes = sorted[0]?.[1] || 0;
-    const tallyHtml = sorted.length
-      ? sorted.map(([seat, cnt]) =>
-          `<span class="${cnt === maxVotes ? 'vote-tally-top' : ''}">${seat}号 ${cnt}票</span>`
-        ).join('  ')
-      : '暂无';
-
-    const rows = state.players.map((p, i) => {
       const seat = i + 1;
-      const voted = round[seat] || null;
-      const btns = state.players.map((_, j) => {
-        const t = j + 1;
-        if (t === seat) return '';
-        return `<button class="vote-btn${voted === t ? ' voted' : ''}" onclick="setVote(${ri},${seat},${t})">${t}</button>`;
-      }).join('');
-      return `<div class="vote-row${!p.alive ? ' vote-dead' : ''}">
-        <span class="vote-seat">${seat}</span>
-        <span class="vote-arrow">→</span>
-        <div class="vote-btns">${btns}</div>
-      </div>`;
-    }).join('');
-
-    return `<div class="vote-round">
-      <div class="vote-round-header">
-        <span class="vote-round-label">第 ${ri + 1} 轮投票</span>
-        <button class="vote-remove-btn" onclick="removeVoteRound(${ri})">删除</button>
+      const target = round[seat];
+      if (target > 0) {
+        if (!byTarget[target]) byTarget[target] = [];
+        byTarget[target].push(seat);
+      } else if (target === 0) {
+        abstainers.push(seat);
+      }
+    });
+    const sorted = Object.entries(byTarget).sort((a, b) => b[1].length - a[1].length);
+    const maxVotes = sorted[0]?.[1].length || 0;
+    const resultRows = sorted.map(([target, voters]) =>
+      `<div class="vote-result-row">
+        <span class="vote-result-target${voters.length === maxVotes ? ' top' : ''}">${target}号</span>
+        <span class="vote-result-arrow">←</span>
+        <span class="vote-result-voters">${voters.join('·')}号</span>
+      </div>`
+    ).join('');
+    const abstainRow = abstainers.length
+      ? `<div class="vote-result-abstain">弃票：${abstainers.join('·')}号</div>` : '';
+    const emptyRow = !sorted.length && !abstainers.length
+      ? '<div style="font-size:11px;color:var(--text-dim);padding:1px 0">暂无记录</div>' : '';
+    return `<div class="vote-summary">
+      <div class="vote-summary-header">
+        <span class="vote-summary-label">第 ${ri + 1} 轮</span>
+        <div class="vote-summary-actions">
+          <button class="vote-summary-edit" onclick="openVoteModal(${ri})">编辑</button>
+          <button class="vote-summary-remove" onclick="removeVoteRound(${ri})">删除</button>
+        </div>
       </div>
-      ${rows}
-      <div class="vote-tally">结果：${tallyHtml}</div>
+      ${resultRows}${abstainRow}${emptyRow}
     </div>`;
   }).join('');
 }
 
 function addVoteRound() {
   if (!state.votes) state.votes = [];
-  state.votes.push({});
-  save();
-  renderVotes();
-  $('voteSection').open = true;
+  openVoteModal(-1);
 }
 
 function removeVoteRound(ri) {
@@ -3144,12 +3222,55 @@ function removeVoteRound(ri) {
   renderVotes();
 }
 
-function setVote(ri, voterSeat, targetSeat) {
-  if (!state.votes[ri]) state.votes[ri] = {};
-  // toggle
-  state.votes[ri][voterSeat] = state.votes[ri][voterSeat] === targetSeat ? null : targetSeat;
+function openVoteModal(ri) {
+  _voteModalRi = ri;
+  _voteModalDraft = ri >= 0 ? Object.assign({}, state.votes[ri]) : {};
+  const roundNum = ri >= 0 ? ri + 1 : (state.votes ? state.votes.length + 1 : 1);
+  document.getElementById('vmodalTitle').textContent = `第 ${roundNum} 轮投票`;
+  renderVoteModal();
+  document.getElementById('voteModal').style.display = 'flex';
+}
+
+function closeVoteModal() {
+  document.getElementById('voteModal').style.display = 'none';
+}
+
+function confirmVoteModal() {
+  if (!state.votes) state.votes = [];
+  if (_voteModalRi >= 0) {
+    state.votes[_voteModalRi] = _voteModalDraft;
+  } else {
+    state.votes.push(_voteModalDraft);
+  }
   save();
   renderVotes();
+  closeVoteModal();
+  $('voteSection').open = true;
+}
+
+function setVoteModal(seat, target) {
+  _voteModalDraft[seat] = _voteModalDraft[seat] === target ? null : target;
+  renderVoteModal();
+}
+
+function renderVoteModal() {
+  const body = document.getElementById('vmodalBody');
+  if (!body) return;
+  const rows = state.players.map((p, i) => {
+    const seat = i + 1;
+    const voted = _voteModalDraft[seat] ?? null;
+    const btns = state.players.map((_, j) => {
+      const t = j + 1;
+      const isSelf = t === seat;
+      return `<button class="vote-btn${isSelf ? ' vote-self' : ''}${voted === t ? ' voted' : ''}" onclick="setVoteModal(${seat},${t})">${t}</button>`;
+    }).join('') + `<button class="vote-btn vote-abstain${voted === 0 ? ' voted' : ''}" onclick="setVoteModal(${seat},0)">弃</button>`;
+    return `<div class="vote-row${!p.alive ? ' vote-dead' : ''}">
+      <span class="vote-seat">${seat}</span>
+      <span class="vote-arrow">→</span>
+      <div class="vote-btns">${btns}</div>
+    </div>`;
+  }).join('');
+  body.innerHTML = rows;
 }
 
 function getRoleColor(key) {
@@ -3196,5 +3317,20 @@ if (_authToken && $('homeBtn')) $('homeBtn').style.display = '';
 
 updateUserUI();
 </script>
+
+<!-- Vote Modal -->
+<div id="voteModal" class="vmodal-overlay" style="display:none" onclick="if(event.target===this)closeVoteModal()">
+  <div class="vmodal-card">
+    <div class="vmodal-header">
+      <span class="vmodal-title" id="vmodalTitle">投票</span>
+      <button class="vmodal-close" onclick="closeVoteModal()">✕</button>
+    </div>
+    <div class="vmodal-body" id="vmodalBody"></div>
+    <div class="vmodal-footer">
+      <button class="vmodal-cancel" onclick="closeVoteModal()">取消</button>
+      <button class="vmodal-confirm" onclick="confirmVoteModal()">确认</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
